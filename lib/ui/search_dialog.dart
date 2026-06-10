@@ -116,24 +116,50 @@ class _SearchDialogState extends State<SearchDialog> {
           ),
         ),
 
-        // 搜索结果或国家列表（鼠标滚轮 / 拖拽滚动）
+        // 搜索结果提示
+        if (_searchQuery.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Text(
+              _searchResults.isEmpty
+                  ? '未找到匹配地区'
+                  : '找到 ${_searchResults.length} 个地区',
+              style: const TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+          ),
+
+        // 搜索结果或国家列表
         Expanded(
           child: _searchQuery.isNotEmpty
-              ? ListView.builder(
-                  itemCount: _searchResults.length,
-                  itemBuilder: (ctx, i) {
-                    final r = _searchResults[i];
-                    return ListTile(
-                      title: Text(r.name, style: const TextStyle(color: Colors.white)),
-                      subtitle: Text(r.country, style: const TextStyle(color: Colors.grey)),
-                      onTap: () => _selectRegion(r),
-                    );
-                  },
-                )
+              ? (_searchResults.isEmpty
+                  ? const Center(
+                      child: Text('没有匹配的地区名称\n请尝试其他关键词',
+                          style: TextStyle(color: Colors.grey, fontSize: 14),
+                          textAlign: TextAlign.center),
+                    )
+                  : ListView.builder(
+                      itemCount: _searchResults.length,
+                      itemBuilder: (ctx, i) {
+                        final r = _searchResults[i];
+                        return ListTile(
+                          title: Text(r.name, style: const TextStyle(color: Colors.white)),
+                          subtitle: Text(r.country, style: const TextStyle(color: Colors.grey)),
+                          onTap: () => _selectRegion(r),
+                        );
+                      },
+                    ))
               : ListView.builder(
-                  itemCount: countries.length,
+                  itemCount: countries.length + 1,
                   itemBuilder: (ctx, i) {
-                    final c = countries[i];
+                    if (i == 0) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Text('共 ${_service.countries.length} 个国家/地区',
+                            style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                      );
+                    }
+                    final idx = i - 1;
+                    final c = countries[idx];
                     final count = _service.regionsForCountry(c).length;
                     return ListTile(
                       title: Text(c, style: const TextStyle(color: Colors.white)),

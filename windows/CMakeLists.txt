@@ -53,9 +53,22 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 add_subdirectory("runner")
 
 
-# Generated plugin build rules, which manage building the plugins and adding
-# them to the application.
-include(flutter/generated_plugins.cmake)
+# Generated plugin build rules.
+# We replace the auto-generated include(flutter/generated_plugins.cmake)
+# with a manually curated list that excludes flutter_inappwebview_windows.
+# Reason: our Windows build uses earth_view_desktop (no WebView).
+# The flutter_inappwebview_windows C++ plugin requires NuGet packages
+# (Microsoft.Web.WebView2, WIL, nlohmann.json) whose restore fails on
+# some environments.
+set(PLUGIN_LIST
+  geolocator_windows
+)
+foreach(plugin ${PLUGIN_LIST})
+  add_subdirectory(flutter/ephemeral/.plugin_symlinks/${plugin}/windows plugins/${plugin})
+  target_link_libraries(${BINARY_NAME} PRIVATE ${plugin}_plugin)
+  list(APPEND PLUGIN_BUNDLED_LIBRARIES $<TARGET_FILE:${plugin}_plugin>)
+  list(APPEND PLUGIN_BUNDLED_LIBRARIES ${${plugin}_bundled_libraries})
+endforeach()
 
 
 # === Installation ===

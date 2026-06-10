@@ -1,5 +1,6 @@
-/// Web 端地球视图 —— 使用原生 IFrameElement + postMessage 通信
-/// 独立文件，通过条件导入替换 earth_view_mobile.dart
+// Web 端地球视图 —— 使用原生 IFrameElement + postMessage 通信
+// 独立文件，通过条件导入替换 earth_view_mobile.dart
+// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
 import 'dart:convert';
 import 'dart:html' as html;
 import 'dart:ui_web' as ui_web;
@@ -25,7 +26,12 @@ class EarthViewState extends State<EarthView> {
   html.ButtonElement? _searchBtn;
   html.DivElement? _card;
   html.SpanElement? _regionSpan;
-  html.SpanElement? _valueSpan;
+  html.SpanElement? _timeSpan;
+  html.SpanElement? _meanSpan;
+  html.SpanElement? _medianSpan;
+  html.SpanElement? _ci95Span;
+  html.SpanElement? _ci75Span;
+  html.SpanElement? _noDataSpan;
 
   bool _pageLoaded = false;
   final String _viewType = 'earth_iframe_${DateTime.now().millisecondsSinceEpoch}';
@@ -84,23 +90,60 @@ class EarthViewState extends State<EarthView> {
         ..style.fontFamily = 'sans-serif'
         ..style.textAlign = 'center'
         ..style.zIndex = '10'
-        ..style.pointerEvents = 'none'; // 不阻挡地球交互
+        ..style.pointerEvents = 'none';
 
       _regionSpan = html.SpanElement()
         ..style.display = 'block'
-        ..style.fontSize = '20px'
+        ..style.fontSize = '18px'
         ..style.color = 'white'
+        ..style.fontWeight = 'bold'
         ..text = '未选择';
 
-      _valueSpan = html.SpanElement()
+      _timeSpan = html.SpanElement()
         ..style.display = 'block'
-        ..style.fontSize = '16px'
+        ..style.fontSize = '13px'
         ..style.color = 'grey'
-        ..style.marginTop = '8px'
-        ..text = '请查询地区';
+        ..text = '';
+
+      _noDataSpan = html.SpanElement()
+        ..style.display = 'none'
+        ..style.fontSize = '14px'
+        ..style.color = 'grey'
+        ..text = '暂无该地区数据';
+
+      _meanSpan = html.SpanElement()
+        ..style.display = 'block'
+        ..style.fontSize = '14px'
+        ..style.color = '#ddd'
+        ..style.marginTop = '4px'
+        ..text = '';
+
+      _medianSpan = html.SpanElement()
+        ..style.display = 'block'
+        ..style.fontSize = '14px'
+        ..style.color = '#ddd'
+        ..text = '';
+
+      _ci95Span = html.SpanElement()
+        ..style.display = 'block'
+        ..style.fontSize = '13px'
+        ..style.color = '#aaa'
+        ..style.marginTop = '6px'
+        ..text = '';
+
+      _ci75Span = html.SpanElement()
+        ..style.display = 'block'
+        ..style.fontSize = '13px'
+        ..style.color = '#aaa'
+        ..text = '';
 
       _card!.append(_regionSpan!);
-      _card!.append(_valueSpan!);
+      _card!.append(_timeSpan!);
+      _card!.append(_noDataSpan!);
+      _card!.append(_meanSpan!);
+      _card!.append(_medianSpan!);
+      _card!.append(_ci95Span!);
+      _card!.append(_ci75Span!);
 
       // 3. 定位按钮（HTML 元素，叠在 iframe 上方）
       _btn = html.ButtonElement()
@@ -187,7 +230,8 @@ class EarthViewState extends State<EarthView> {
   }
 
   /// 通过 postMessage 调用 iframe 中的 rotateTo
-  Future<void> rotateTo(double lat, double lon, String name, double value) async {
+  Future<void> rotateTo(double lat, double lon, String name, double value,
+      [dynamic record, int? year, int? month]) async {
     debugPrint('🎯 rotateTo: lat=$lat lon=$lon name=$name loaded=$_pageLoaded');
     if (_iframe == null || !_pageLoaded) return;
 
@@ -201,8 +245,26 @@ class EarthViewState extends State<EarthView> {
 
     // 更新 HTML 卡片
     _regionSpan?.text = name;
-    _valueSpan?.text = '渗透系数: ${value.toStringAsFixed(6)}';
-    _valueSpan?.style.color = 'white';
+    _timeSpan?.text = (year != null && month != null) ? '$year年$month月' : '';
+
+    final hasData = record != null && record.hasData;
+    _noDataSpan?.style.display = hasData ? 'none' : 'block';
+    _meanSpan?.style.display = hasData ? 'block' : 'none';
+    _medianSpan?.style.display = hasData ? 'block' : 'none';
+    _ci95Span?.style.display = hasData ? 'block' : 'none';
+    _ci75Span?.style.display = hasData ? 'block' : 'none';
+
+    if (hasData) {
+      _meanSpan?.text = '均值: ${record.mean?.toStringAsFixed(6) ?? '—'}';
+      _medianSpan?.text = '中位数: ${record.median?.toStringAsFixed(6) ?? '—'}';
+      _ci95Span?.text = '95% CI: [${record.ci95Low?.toStringAsFixed(4) ?? '—'}, ${record.ci95High?.toStringAsFixed(4) ?? '—'}]';
+      _ci75Span?.text = '75% CI: [${record.ci75Low?.toStringAsFixed(4) ?? '—'}, ${record.ci75High?.toStringAsFixed(4) ?? '—'}]';
+    } else {
+      _meanSpan?.text = '';
+      _medianSpan?.text = '';
+      _ci95Span?.text = '';
+      _ci75Span?.text = '';
+    }
   }
 
   @override

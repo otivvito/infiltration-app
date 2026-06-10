@@ -1,5 +1,5 @@
-/// Web 端数据库存根 —— sqflite 不支持 Web，返回 null 使用占位数据
-/// 同名类和接口，通过条件导入与 mobile 版本互换
+// Web 端数据库存根 —— sqflite 不支持 Web，返回 null 使用占位数据
+// 同名类和接口，通过条件导入与 mobile 版本互换
 
 class InfiltrationRecord {
   final double? mean;

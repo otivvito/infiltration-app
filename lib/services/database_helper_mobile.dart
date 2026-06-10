@@ -1,11 +1,10 @@
-/// 原生平台数据库查询 —— Android/iOS 用 sqflite，Desktop 用 sqflite_common_ffi
+// 原生平台数据库查询 —— Android/iOS 用 sqflite，Desktop 用 sqflite_common_ffi
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 /// 单条渗透系数查询结果

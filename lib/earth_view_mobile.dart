@@ -1,4 +1,4 @@
-/// 移动端地球视图 —— 使用 flutter_inappwebview
+// 移动端地球视图 —— 使用 flutter_inappwebview
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -51,7 +51,8 @@ class EarthViewState extends State<EarthView> {
   void hideOverlay() {} // 移动端不需要（Flutter 层级正常）
   void showOverlay() {}
 
-  Future<void> rotateTo(double lat, double lon, String name, double value) async {
+  Future<void> rotateTo(double lat, double lon, String name, double value,
+      [dynamic record, int? year, int? month]) async {
     if (_controller == null || !_pageLoaded) return;
     await _controller!.evaluateJavascript(
       source: "rotateTo($lat, $lon, '$name', $value)",

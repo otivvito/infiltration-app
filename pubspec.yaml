@@ -33,6 +33,7 @@ dependencies:
     sdk: flutter
   sqflite: ^2.4.2+1            # SQLite (Android/iOS)
   sqflite_common_ffi: ^2.3.4+4 # SQLite FFI (Windows/Linux/macOS)
+  path: ^1.9.1                # 路径操作
   path_provider: ^2.1.5      # 获取应用可写目录
   geolocator: ^10.1.0        # GPS定位（可选）
   flutter_inappwebview: ^6.1.5  # WebView (Android/iOS/Web)
