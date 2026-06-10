@@ -22,6 +22,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: '渗透系数查询',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
       home: const GlobePage(),
     );

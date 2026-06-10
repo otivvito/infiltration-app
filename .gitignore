@@ -22,3 +22,5 @@ web/
 Thumbs.db
 assets/infiltration.db
 scripts/__pycache__/
+android/key.properties
+android/app/upload-keystore.jks
