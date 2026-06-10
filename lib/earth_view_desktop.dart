@@ -176,7 +176,7 @@ class EarthViewState extends State<EarthView>
                         const SizedBox(height: 12),
                         if (_regionName == '未选择')
                           const Center(
-                            child: Text('🔍 点击右上角搜索按钮查询地区',
+                            child: Text('🔍 点击右下角按钮查询地区',
                                 style:
                                     TextStyle(fontSize: 14, color: Colors.grey)),
                           )

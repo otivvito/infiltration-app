@@ -208,14 +208,6 @@ class _GlobePageState extends State<GlobePage> {
         title: kIsWeb ? null : const Text('渗透系数'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        actions: kIsWeb
-            ? null // Web 端搜索按钮由 HTML 元素提供
-            : [
-                IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: _openSearch,
-                ),
-              ],
       ),
       body: Stack(
         children: [
@@ -241,10 +233,11 @@ class _GlobePageState extends State<GlobePage> {
       floatingActionButton: kIsWeb
           ? null
           : FloatingActionButton(
-              child: const Icon(Icons.my_location),
-              onPressed: () {
-                _rotateTo(39.9, 116.4, '北京 (示例)', 0.723);
-              },
+              heroTag: 'search',
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+              onPressed: _openSearch,
+              child: const Icon(Icons.search),
             ),
     );
   }
