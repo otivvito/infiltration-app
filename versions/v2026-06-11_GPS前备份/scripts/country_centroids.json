@@ -1,0 +1,418 @@
+{
+  "Norfolk Island": {
+    "lat": -29.03333,
+    "lon": 167.95
+  },
+  "Niue": {
+    "lat": -19.03333,
+    "lon": -169.86667
+  },
+  "Maldives": {
+    "lat": 3.2,
+    "lon": 73
+  },
+  "Marshall Islands": {
+    "lat": 7.113,
+    "lon": 171.236
+  },
+  "Monaco": {
+    "lat": 43.73718,
+    "lon": 7.42145
+  },
+  "Kiribati": {
+    "lat": 1.421,
+    "lon": 172.984
+  },
+  "Gibraltar": {
+    "lat": 36.14474,
+    "lon": -5.35257
+  },
+  "Falkland Islands": {
+    "lat": -51.75,
+    "lon": -59.16667
+  },
+  "Cook Islands": {
+    "lat": -21.24842,
+    "lon": -159.78516
+  },
+  "Curaçao": {
+    "lat": 12.16667,
+    "lon": -68.96667
+  },
+  "Christmas Island": {
+    "lat": -10.49,
+    "lon": 105.63
+  },
+  "Cocos Islands": {
+    "lat": -12.1642,
+    "lon": 96.87332
+  },
+  "British Indian Ocean Territory": {
+    "lat": -6,
+    "lon": 72
+  },
+  "Bouvet Island": {
+    "lat": -54.42222,
+    "lon": 3.35833
+  },
+  "Anguilla": {
+    "lat": 18.22,
+    "lon": -63.068
+  },
+  "Antarctica": {
+    "lat": -78.15856,
+    "lon": 16.40626
+  },
+  "Aruba": {
+    "lat": 12.5,
+    "lon": -69.96667
+  },
+  "Vatican City": {
+    "lat": 41.90268,
+    "lon": 12.45414
+  },
+  "Spratly islands": {
+    "lat": 10,
+    "lon": 114
+  },
+  "Sint Maarten": {
+    "lat": 18.041,
+    "lon": -63.055
+  },
+  "South Georgia and the South Sandwich Islands": {
+    "lat": -56,
+    "lon": -33
+  },
+  "Saint-Barthélemy": {
+    "lat": 17.9,
+    "lon": -62.833
+  },
+  "Saint-Martin": {
+    "lat": 18.071,
+    "lon": -63.052
+  },
+  "Paracel Islands": {
+    "lat": 16.5,
+    "lon": 112
+  },
+  "Pitcairn Islands": {
+    "lat": -25.06667,
+    "lon": -130.1
+  },
+  "Åland": {
+    "lat": 60.1,
+    "lon": 19.93
+  },
+  "Andorra": {
+    "lat": 40.97655,
+    "lon": -0.44721
+  },
+  "Antigua and Barbuda": {
+    "lat": 17.05,
+    "lon": -61.8
+  },
+  "Bahamas": {
+    "lat": 25.04082,
+    "lon": -77.37122
+  },
+  "Barbados": {
+    "lat": 13.16453,
+    "lon": -59.55165
+  },
+  "Belize": {
+    "lat": 17.25,
+    "lon": -88.75
+  },
+  "Benin": {
+    "lat": 9.5,
+    "lon": 2.25
+  },
+  "Bermuda": {
+    "lat": 32.33022,
+    "lon": -64.74003
+  },
+  "Bosnia and Herzegovina": {
+    "lat": 44.25,
+    "lon": 17.83333
+  },
+  "Botswana": {
+    "lat": -22,
+    "lon": 24
+  },
+  "British Virgin Islands": {
+    "lat": 18.5,
+    "lon": -64.5
+  },
+  "Burkina Faso": {
+    "lat": 12.5,
+    "lon": -1.66667
+  },
+  "Burundi": {
+    "lat": -3.35,
+    "lon": 29.88333
+  },
+  "C?te d'Ivoire": {
+    "lat": 8,
+    "lon": -5.5
+  },
+  "Cape Verde": {
+    "lat": 14.7221,
+    "lon": -17.50449
+  },
+  "Cayman Islands": {
+    "lat": 19.5,
+    "lon": -80.66667
+  },
+  "Central African Republic": {
+    "lat": 7,
+    "lon": 21
+  },
+  "Comoros": {
+    "lat": -12.23333,
+    "lon": 44.44553
+  },
+  "Democratic Republic of the Congo": {
+    "lat": -2.5,
+    "lon": 23.5
+  },
+  "Djibouti": {
+    "lat": 11.58901,
+    "lon": 43.14503
+  },
+  "Dominica": {
+    "lat": 15.5,
+    "lon": -61.33333
+  },
+  "El Salvador": {
+    "lat": 13.83333,
+    "lon": -88.91667
+  },
+  "Equatorial Guinea": {
+    "lat": 1.7,
+    "lon": 10.5
+  },
+  "Faroe Islands": {
+    "lat": 61.98285,
+    "lon": -6.88293
+  },
+  "French Guiana": {
+    "lat": 4,
+    "lon": -53
+  },
+  "French Polynesia": {
+    "lat": -15,
+    "lon": -140
+  },
+  "French Southern Territories": {
+    "lat": -43,
+    "lon": 67
+  },
+  "Gambia": {
+    "lat": 13.5,
+    "lon": -15.5
+  },
+  "Greenland": {
+    "lat": 72,
+    "lon": -40
+  },
+  "Grenada": {
+    "lat": 12.116,
+    "lon": -61.679
+  },
+  "Guadeloupe": {
+    "lat": 16.25,
+    "lon": -61.58333
+  },
+  "Guam": {
+    "lat": 13.47861,
+    "lon": 144.81834
+  },
+  "Guernsey": {
+    "lat": 49.466,
+    "lon": -2.583
+  },
+  "Guinea-Bissau": {
+    "lat": 12,
+    "lon": -15
+  },
+  "Haiti": {
+    "lat": 19.07582,
+    "lon": -72.29616
+  },
+  "Isle of Man": {
+    "lat": 55.06301,
+    "lon": -3.55611
+  },
+  "Jersey": {
+    "lat": 49.214,
+    "lon": -2.132
+  },
+  "Kosovo": {
+    "lat": 42.58333,
+    "lon": 20.91667
+  },
+  "Lesotho": {
+    "lat": -29.5,
+    "lon": 28.25
+  },
+  "Liberia": {
+    "lat": 6.5,
+    "lon": -9.5
+  },
+  "Liechtenstein": {
+    "lat": 47.16667,
+    "lon": 9.53333
+  },
+  "Macedonia": {
+    "lat": 41.608,
+    "lon": 21.745
+  },
+  "Malawi": {
+    "lat": -13.5,
+    "lon": 34
+  },
+  "Martinique": {
+    "lat": 14.66667,
+    "lon": -61
+  },
+  "Mauritius": {
+    "lat": -20.3,
+    "lon": 57.58333
+  },
+  "Mayotte": {
+    "lat": -12.83333,
+    "lon": 45.16667
+  },
+  "Micronesia": {
+    "lat": 6.924,
+    "lon": 158.162
+  },
+  "Montserrat": {
+    "lat": 16.742,
+    "lon": -62.187
+  },
+  "Nauru": {
+    "lat": -0.523,
+    "lon": 166.931
+  },
+  "New Caledonia": {
+    "lat": -21.5,
+    "lon": 165.5
+  },
+  "Northern Mariana Islands": {
+    "lat": 15.214,
+    "lon": 145.756
+  },
+  "Palau": {
+    "lat": 7.515,
+    "lon": 134.582
+  },
+  "Palestina": {
+    "lat": 31.947,
+    "lon": 35.227
+  },
+  "Puerto Rico": {
+    "lat": 18.24829,
+    "lon": -66.49989
+  },
+  "Reunion": {
+    "lat": -21.11429,
+    "lon": 55.54756
+  },
+  "Rwanda": {
+    "lat": -2,
+    "lon": 30
+  },
+  "São Tomé and Príncipe": {
+    "lat": 1,
+    "lon": 7
+  },
+  "Saint Helena": {
+    "lat": -15.965,
+    "lon": -5.708
+  },
+  "Saint Kitts and Nevis": {
+    "lat": 17.33333,
+    "lon": -62.75
+  },
+  "Saint Lucia": {
+    "lat": 13.88333,
+    "lon": -60.96667
+  },
+  "Saint Pierre and Miquelon": {
+    "lat": 46.83333,
+    "lon": -56.33333
+  },
+  "Saint Vincent and the Grenadines": {
+    "lat": 13.08333,
+    "lon": -61.2
+  },
+  "Samoa": {
+    "lat": -13.8,
+    "lon": -172.13333
+  },
+  "San Marino": {
+    "lat": 43.93667,
+    "lon": 12.44639
+  },
+  "Seychelles": {
+    "lat": -4.58333,
+    "lon": 55.66667
+  },
+  "Sierra Leone": {
+    "lat": 8.5,
+    "lon": -11.5
+  },
+  "Solomon Islands": {
+    "lat": -8,
+    "lon": 159
+  },
+  "South Sudan": {
+    "lat": 7.5,
+    "lon": 30
+  },
+  "Timor-Leste": {
+    "lat": -8.83333,
+    "lon": 125.75
+  },
+  "Togo": {
+    "lat": 8.66667,
+    "lon": 1.08333
+  },
+  "Tokelau": {
+    "lat": -9.167,
+    "lon": -171.83
+  },
+  "Tonga": {
+    "lat": -6.28764,
+    "lon": 176.31471
+  },
+  "Trinidad and Tobago": {
+    "lat": 11,
+    "lon": -61
+  },
+  "Turks and Caicos Islands": {
+    "lat": 21.73333,
+    "lon": -71.58333
+  },
+  "Tuvalu": {
+    "lat": -8.51719,
+    "lon": 179.14478
+  },
+  "United Arab Emirates": {
+    "lat": 23.75,
+    "lon": 54.5
+  },
+  "United States Minor Outlying Islands": {
+    "lat": 5.875,
+    "lon": -162.057
+  },
+  "Vanuatu": {
+    "lat": -16.3333,
+    "lon": 167.5
+  },
+  "Wallis and Futuna": {
+    "lat": -13.3,
+    "lon": -176.2
+  }
+}
