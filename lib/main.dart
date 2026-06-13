@@ -5,6 +5,7 @@ import 'earth_view_native.dart'
     if (dart.library.html) 'earth_view_web.dart';
 import 'services/database_helper_mobile.dart'
     if (dart.library.html) 'services/database_helper_stub.dart';
+import 'services/favorites_service.dart';
 import 'services/insight_service.dart';
 import 'services/location_service.dart';
 import 'services/region_service.dart';
@@ -52,6 +53,8 @@ class _GlobePageState extends State<GlobePage> {
   bool _autoLocateDone = false;
   bool _heatmapOn = false;
   List<InsightLine>? _insights;
+  bool _isFavorited = false;
+  int? _regionId;
 
   @override
   void initState() {
@@ -98,7 +101,44 @@ class _GlobePageState extends State<GlobePage> {
         ? record.displayValue!
         : 0.5 + (r.lat.abs() % 0.3);
 
+    // 检查收藏状态
+    final fav = await FavoritesService.instance.isFavorited(r.id, result.year, result.month);
+
     _rotateTo(r.lat, r.lon, r.displayName, display, record, result.year, result.month, r.id);
+    if (mounted) setState(() { _isFavorited = fav; _regionId = r.id; });
+  }
+
+  Future<void> _openFavorites() async {
+    final favs = FavoritesService.instance.favorites;
+    if (!mounted) return;
+
+    final result = await showModalBottomSheet<FavoriteItem>(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => _FavoritesSheet(favorites: favs),
+    );
+
+    if (result == null || !mounted) return;
+
+    // 跳转到收藏的地区
+    final region = RegionService().findById(result.regionId);
+    if (region == null) return;
+
+    setState(() => _loading = true);
+    final db = DatabaseHelper.instance;
+    final record = await db.query(result.regionId, result.year, result.month);
+    if (!mounted) return;
+    setState(() => _loading = false);
+
+    final display = (record != null && record.hasData)
+        ? record.displayValue!
+        : 0.5 + (region.lat.abs() % 0.3);
+
+    _rotateTo(region.lat, region.lon, region.displayName, display, record, result.year, result.month, result.regionId);
+    if (mounted) setState(() => _isFavorited = true);
   }
 
   Future<void> _openCompare() async {
@@ -193,6 +233,23 @@ class _GlobePageState extends State<GlobePage> {
   }
 
   /// 构建统计指标行
+  Widget _fabBtn(IconData? icon, VoidCallback? onTap, Color bg, String tag, {bool loading = false, bool large = false}) {
+    final size = large ? 48.0 : 36.0;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(shape: BoxShape.circle, color: bg),
+        child: Center(
+          child: loading
+              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+              : Icon(icon, color: Colors.white, size: large ? 24 : 18),
+        ),
+      ),
+    );
+  }
+
   Widget _statRow(String label, double? value, {Color? color}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -228,12 +285,60 @@ class _GlobePageState extends State<GlobePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 地区名
-            Center(
-              child: Text(
-                _regionName,
-                style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    _regionName,
+                    style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                if (_record != null && _record!.hasData)
+                  GestureDetector(
+                    onTap: () async {
+                      if (_regionId == null || _year == null || _month == null) return;
+                      final favService = FavoritesService.instance;
+                      if (_isFavorited) {
+                        await favService.removeByKey(_regionId!, _year!, _month!);
+                        if (mounted) {
+                          setState(() => _isFavorited = false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('已取消收藏'), duration: Duration(seconds: 1)),
+                          );
+                        }
+                      } else {
+                        await favService.add(
+                          _regionId!, _regionName,
+                          _regionName.contains(',') ? _regionName.split(', ').last : _regionName,
+                          _year!, _month!,
+                        );
+                        if (mounted) {
+                          setState(() => _isFavorited = true);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('已收藏'), duration: Duration(seconds: 1)),
+                          );
+                        }
+                      }
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _isFavorited ? Icons.star : Icons.star_border,
+                          color: _isFavorited ? Colors.amber : Colors.grey,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          _isFavorited ? '已收藏' : '收藏',
+                          style: TextStyle(color: _isFavorited ? Colors.amber : Colors.grey, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
             if (timeStr != null) ...[
               const SizedBox(height: 4),
@@ -328,6 +433,13 @@ class _GlobePageState extends State<GlobePage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
+          // 收藏列表
+          IconButton(
+            icon: const Icon(Icons.bookmarks, color: Colors.white54, size: 22),
+            onPressed: () => _openFavorites(),
+            tooltip: '收藏夹',
+          ),
+          // 信息
           IconButton(
             icon: Container(
               width: 24,
@@ -365,9 +477,9 @@ class _GlobePageState extends State<GlobePage> {
           // 仅当视图不自带卡片时才显示（移动端需要，桌面/Web自带）
           if (!EarthViewState.hasOwnOverlay) ...[
             Positioned(
-              bottom: 40,
-              left: 20,
-              right: 20,
+              bottom: 100, // 给底部按钮栏留空间
+              left: 16,
+              right: 16,
               child: _buildResultCard(),
             ),
           ],
@@ -375,58 +487,96 @@ class _GlobePageState extends State<GlobePage> {
       ),
       floatingActionButton: kIsWeb
           ? null
-          : Padding(
-              padding: const EdgeInsets.only(bottom: 72),
-              child: Column(
+          : Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // 对比模式
-                  FloatingActionButton.small(
-                    heroTag: 'compare',
-                    backgroundColor: Colors.purple[700],
-                    foregroundColor: Colors.white,
-                    onPressed: _openCompare,
-                    child: const Icon(Icons.compare_arrows, size: 20),
-                  ),
-                  const SizedBox(height: 8),
-                  // 热力图切换
-                  FloatingActionButton.small(
-                    heroTag: 'heatmap',
-                    backgroundColor: _heatmapOn ? Colors.orange : Colors.grey[700],
-                    foregroundColor: Colors.white,
-                    onPressed: _toggleHeatmap,
-                    child: const Icon(Icons.whatshot, size: 20),
-                  ),
-                  const SizedBox(height: 8),
-                  // GPS 定位按钮
-                  FloatingActionButton.small(
-                    heroTag: 'gps',
-                    backgroundColor: _locating ? Colors.grey : Colors.green,
-                    foregroundColor: Colors.white,
-                    onPressed: _locating ? null : _locateMe,
-                    child: _locating
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Icon(Icons.my_location),
-                  ),
-                  const SizedBox(height: 12),
-                  // 搜索按钮
-                  FloatingActionButton(
-                    heroTag: 'search',
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                    onPressed: _openSearch,
-                    child: const Icon(Icons.search),
-                  ),
+                  _fabBtn(Icons.compare_arrows, _openCompare, Colors.purple[700]!, 'compare'),
+                  const SizedBox(width: 8),
+                  _fabBtn(Icons.whatshot, _toggleHeatmap, _heatmapOn ? Colors.orange : Colors.grey[700]!, 'heatmap'),
+                  const SizedBox(width: 8),
+                  _fabBtn(_locating ? null : Icons.my_location, _locating ? null : _locateMe, Colors.green, 'gps',
+                      loading: _locating),
+                  const SizedBox(width: 8),
+                  _fabBtn(Icons.search, _openSearch, Colors.blue, 'search', large: true),
                 ],
               ),
             ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+}
+
+/// 收藏列表底部弹窗
+class _FavoritesSheet extends StatelessWidget {
+  final List<FavoriteItem> favorites;
+  const _FavoritesSheet({required this.favorites});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                const Text('⭐ 收藏夹', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                const Spacer(),
+                Text('${favorites.length} 项', style: const TextStyle(color: Colors.grey, fontSize: 13)),
+              ],
+            ),
+          ),
+          if (favorites.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(40),
+              child: Column(
+                children: [
+                  Text('☆', style: TextStyle(fontSize: 40, color: Colors.grey)),
+                  SizedBox(height: 8),
+                  Text('还没有收藏', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                  SizedBox(height: 4),
+                  Text('查询地区后点击 ★ 即可收藏', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                ],
+              ),
+            )
+          else
+            SizedBox(
+              height: 360,
+              child: ListView.builder(
+                itemCount: favorites.length,
+                itemBuilder: (ctx, i) {
+                  final f = favorites[i];
+                  return Dismissible(
+                    key: Key('fav_${f.regionId}_${f.year}_${f.month}'),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20),
+                      color: Colors.red,
+                      child: const Icon(Icons.delete, color: Colors.white),
+                    ),
+                    onDismissed: (_) => FavoritesService.instance.remove(i),
+                    child: ListTile(
+                      leading: const Icon(Icons.star, color: Colors.amber, size: 20),
+                      title: Text(f.displayName, style: const TextStyle(color: Colors.white, fontSize: 14)),
+                      subtitle: Text(f.timeLabel, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      onTap: () => Navigator.pop(context, f),
+                    ),
+                  );
+                },
+              ),
+            ),
+          const SizedBox(height: 8),
+        ],
+      ),
     );
   }
 }

@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import 'painters/world_map_painter.dart';
+import 'services/favorites_service.dart';
 import 'services/heatmap_service.dart';
 import 'services/insight_service.dart';
 
@@ -51,6 +52,8 @@ class EarthViewState extends State<EarthView>
   int _heatmapSliderYear = 2024;
   bool _heatmapPlaying = false;
   List<InsightLine>? _insights;
+  bool _isFavorited = false;
+  int? _storedRegionId;
 
   // Time animation
   late AnimationController _timeCtrl;
@@ -165,13 +168,18 @@ class EarthViewState extends State<EarthView>
       _timeLabel = (year != null && month != null) ? '$year年$month月' : null;
       if (year != null) _queryYear = year;
       if (month != null) _queryMonth = month;
-      // 加载数据洞察
+      // 加载数据洞察 + 收藏状态
       if (record != null && record.hasData && regionId != null && year != null && month != null && record.mean != null) {
+        _storedRegionId = regionId;
         InsightService.instance.generate(regionId, year, month, record.mean).then((list) {
           if (mounted) setState(() => _insights = list);
         });
+        FavoritesService.instance.isFavorited(regionId, year, month).then((fav) {
+          if (mounted) setState(() => _isFavorited = fav);
+        });
       } else {
         _insights = null;
+        _isFavorited = false;
       }
       if (record != null) {
         _mean = record.mean;
@@ -396,14 +404,43 @@ class EarthViewState extends State<EarthView>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Center(
-                          child: Text(
-                            _regionName,
-                            style: const TextStyle(
-                                fontSize: 18,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Spacer(),
+                            Text(
+                              _regionName,
+                              style: const TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                            ),
+                            const Spacer(),
+                            if (_hasData)
+                              GestureDetector(
+                                onTap: () async {
+                                  if (_storedRegionId == null || _queryYear == 0 || _queryMonth == 0) return;
+                                  final fs = FavoritesService.instance;
+                                  if (_isFavorited) {
+                                    await fs.removeByKey(_storedRegionId!, _queryYear, _queryMonth);
+                                    if (mounted) setState(() => _isFavorited = false);
+                                  } else {
+                                    await fs.add(
+                                      _storedRegionId!, _regionName,
+                                      _regionName.contains(',') ? _regionName.split(', ').last : _regionName,
+                                      _queryYear, _queryMonth,
+                                    );
+                                    if (mounted) setState(() => _isFavorited = true);
+                                  }
+                                },
+                                child: Icon(
+                                  _isFavorited ? Icons.star : Icons.star_border,
+                                  color: _isFavorited ? Colors.amber : Colors.grey,
+                                  size: 22,
+                                ),
+                              ),
+                          ],
                         ),
                         if (_timeLabel != null)
                           Center(

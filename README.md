@@ -1,161 +1,191 @@
-# 🌍 全球渗透系数查询 App
+# 🌍 渗透系数查询系统
 
-> 基于 Flutter + Three.js 的跨平台应用，用 3D 地球 / 2D 世界地图查询全球建筑室内渗透系数。
+> 基于 Flutter 的跨平台应用，查询全球建筑室内空气渗透系数。
 >
-> 数据：**3614 地区 × 1990–2024 年月度 × 6 项统计指标**（均值、中位数、CI95、CI75）
+> 数据：**3,614 地区 × 1990–2024 年月度 × 6 项统计指标**
 
 ---
 
-## 🎯 项目目标
+## 📱 安装
 
-将科研数据集（164MB SQLite）变成手机 App，支持：
-- 🗺️ 3D 地球（Web）或 2D 世界地图（桌面）可视化定位
-- 🔍 国家 → 地区 → 年月 三级搜索
-- 📊 6 项统计指标展示
-- 📍 GPS 自动定位（代码就绪，待测试）
+### Android
+
+下载 APK 安装：
+- **Release**（推荐）：`build/app/outputs/flutter-apk/app-release.apk`（149MB）
+- **Debug**：`build/app/outputs/flutter-apk/app-debug.apk`（267MB）
+
+### Web
+
+```
+https://otivvito.github.io/infiltration-app
+```
+
+> ⚠️ Web 版使用占位数据（SQLite 不支持浏览器），完整数据需 Android/Windows 版。
+
+### Windows
+
+```bash
+flutter run -d windows
+```
+
+### iOS
+
+需要 macOS + Xcode。推荐使用 Codemagic CI 云端构建。
 
 ---
 
-## 📦 技术架构
+## ✨ 功能
+
+| 功能 | 说明 |
+|------|------|
+| 🔍 **搜索查询** | 252 国 → 3,614 地区 → 年月选择，6 项统计指标 |
+| 🗺️ **3D/2D 地球** | Android 3D Three.js 地球，Windows 2D 墨卡托地图 |
+| 📍 **GPS 定位** | 打开 App 自动定位，匹配最近地区，显示当地数据 |
+| 🔥 **热力图** | 252 国气泡图，蓝→红 渐变，含时间轴（1990-2024） |
+| ⏳ **时间轴** | 拖动滑块 + 播放动画，看 35 年全球变化 |
+| ⚖️ **对比模式** | 两地区并排对比，色条 + 表格 + 差异箭头 |
+| 📊 **数据洞察** | 全球排名、时间趋势、月度特征——纯本地计算 |
+| ⭐ **收藏夹** | 收藏常用地区，底部弹窗快速访问，左滑删除 |
+| ℹ️ **科普页** | 右上角 (i) 按钮，解释渗透系数的建筑学意义 |
+| 🎨 **自定义图标** | 地球+水滴主题，自适应图标（Android 8+） |
+
+---
+
+## 🏗️ 技术架构
 
 ```
 lib/
-├── main.dart                         # App 入口，搜索与地球联动
-├── earth_view_web.dart               # Web : IFrameElement + Three.js 3D 地球
-├── earth_view_mobile.dart            # 移动端 : flutter_inappwebview + 3D 地球
-├── earth_view_desktop.dart           # 桌面端 : 2D 世界地图 (CustomPaint)
-├── earth_view_native.dart            # 原生平台路由（条件导出）
+├── main.dart                         # App 入口，状态管理
+├── earth_view_web.dart               # Web : IFrameElement + Three.js
+├── earth_view_mobile.dart            # Android : InAppWebView + 3D 地球
+├── earth_view_desktop.dart           # Windows : 2D CustomPaint 地图
+├── earth_view_native.dart            # 平台路由（条件导出）
 ├── services/
-│   ├── region_service.dart           # 地区数据加载与搜索 (regions.json)
-│   ├── database_helper_mobile.dart   # SQLite 查询 (sqflite + sqflite_common_ffi)
-│   └── database_helper_stub.dart     # Web 端数据库存根
+│   ├── region_service.dart           # 地区搜索与坐标
+│   ├── database_helper_mobile.dart   # SQLite (sqflite + ffi)
+│   ├── database_helper_stub.dart     # Web 存根
+│   ├── location_service.dart         # GPS + Haversine 最近地区
+│   ├── heatmap_service.dart          # 热力图：国家聚合 + log 缩放
+│   ├── insight_service.dart          # 数据洞察：排名/趋势/月度
+│   └── favorites_service.dart        # 收藏夹 JSON 持久化
 ├── ui/
-│   └── search_dialog.dart            # 搜索 UI：搜索 → 国家 → 地区 → 年月
+│   ├── search_dialog.dart            # 搜索 → 国家 → 地区 → 年月
+│   ├── compare_page.dart             # 两地区并排对比
+│   └── info_page.dart                # 渗透系数科普
 ├── painters/
-│   └── world_map_painter.dart        # 2D 世界地图 CustomPainter（墨卡托投影）
+│   └── world_map_painter.dart        # 墨卡托投影 + Picture 预渲染
 └── data/
-    └── world_outlines.dart           # 简化的大洲/岛屿轮廓坐标
+    └── world_outlines.dart           # 大洲轮廓坐标
 ```
 
-**平台自适应策略：**
+**平台自适应：**
 ```
 main.dart
-  ├─ Web     → earth_view_web       (3D Three.js, IFrameElement)
+  ├─ Web     → earth_view_web       (3D Three.js + HTML overlay)
   └─ Native  → earth_view_native
-                 ├─ Android/iOS  → earth_view_mobile   (InAppWebView + 3D)
-                 └─ Desktop      → earth_view_desktop  (CustomPaint 2D 地图)
+                 ├─ Android/iOS  → earth_view_mobile   (WebView 3D)
+                 └─ Desktop      → earth_view_desktop  (CustomPaint 2D)
 ```
 
 ---
 
-## 📝 开发记录 (2026-06-10/11)
+## 📋 开发记录（2026-06-10 ~ 06-13）
 
-```
-Git Log
-───────
-9132b99 feat: 去除DEBUG横幅 + 配置release签名
-7203903 fix: 允许Gradle处理含中文路径的项目
-a27ace8 refactor: 移除演示FAB, 搜索按钮移到右下角
-7ec8db2 feat: 2D世界地图可视化替代桌面端占位图标
-bae95bb feat: 增强结果显示 + 修复Windows编译 + UX优化
-1080a47 feat: 3D地球 + 搜索UI + 数据库接入（初始提交）
-```
+### 基础架构
+- ✅ 3D 地球（Three.js）+ 2D 地图（CustomPaint 墨卡托）
+- ✅ 搜索 UI（252 国 → 3,614 地区 → 年月 + 计数）
+- ✅ 6 项统计指标（均值/中位数/CI95/CI75）
+- ✅ 平台自适应（Web / Android / Windows）
+- ✅ Release 签名（upload-keystore.jks）
+- ✅ 项目迁移至 ASCII 路径 `D:\SRT\infiltration_app`
+- ✅ Debug + Release APK 编译成功
 
-### 本轮完成
+### 坐标数据
+- ✅ 950 → 0 个 (0,0) 坐标（Open-Meteo + 手动修正 16 国）
+- ✅ 中美 84 省/州真实坐标（手工录入）
+- ✅ 1,498 个全球子地区精确坐标（Open-Meteo API 批量）
+- ✅ 总计 1,582/3,614 个地区有真实坐标
 
-| 类别 | 内容 |
-|------|------|
-| **桌面端可视化** | 2D 世界地图（CustomPaint 墨卡托投影）、9 大陆轮廓、经纬网格、脉冲标记动画 |
-| **结果显示** | 从单一数值 → 6 项统计指标卡片（均值/中位数/CI95/CI75） |
-| **UX** | 初始引导、加载状态、空数据提示、搜索计数、搜索按钮移至右下角 FAB |
-| **Windows** | 修复编译（排除 `flutter_inappwebview_windows` NuGet 依赖）、静态 plugin_registrant |
-| **Android** | 首次 APK 编译成功、去除 DEBUG 横幅、配置签名密钥、解决中文路径 Gradle 问题 |
-| **代码质量** | flutter analyze 零问题、条件导入零开销平台切换 |
+### 功能特性
+- ✅ GPS 自动定位（三级降级策略：缓存→低精度超时→提示）
+- ✅ 热力图（252 国气泡 + 时间轴 1990-2024 + 播放动画）
+- ✅ 对比模式（两地区并排 + 色条 + 表格 + 箭头）
+- ✅ 数据洞察（全球排名、时间趋势、月度特征，纯本地计算）
+- ✅ 收藏夹（☆ 切换收藏、底部弹窗列表、左滑删除）
+- ✅ 科普说明页（右上角 i 按钮）
+- ✅ 自定义应用图标（地球+水滴主题）
+- ✅ 版本备份机制（versions/ 文件夹，7 个历史版本）
 
-### 编译状态
-
-```
-✅ flutter build web       → build/web/
-✅ flutter build windows   → build/windows/x64/runner/Debug/infiltration_app.exe
-✅ flutter build apk       → build/app/outputs/flutter-apk/app-debug.apk (267MB)
-🔲 flutter build apk --release  ← 需 ASCII 路径（中文路径 AOT 编码问题）
-🔲 flutter build ios      ← 需 macOS + Xcode
-```
+### Web 部署
+- ✅ Web 编译成功（`flutter build web`）
+- ✅ GitHub Pages 部署（`otivvito.github.io/infiltration-app`）
+- ⚠️ base href 偶有网络问题，需手动修复
 
 ---
 
 ## 🛠️ 开发命令
 
 ```bash
-cd infiltration_app
+# 项目路径
+cd D:/SRT/infiltration_app
 
 # 编译
-flutter build web                     # Web 版（Chrome 可直接打开）
-flutter build windows --debug         # Windows 桌面版
-flutter build apk --debug             # Android APK
+flutter build apk --release            # Android Release APK (149MB)
+flutter build apk --debug              # Android Debug APK (267MB)
+flutter build web --base-href "//infiltration-app/"   # Web 版
+flutter build windows --debug          # Windows 桌面版
 
 # 运行
-flutter run -d chrome                 # 浏览器运行（3D 地球）
-flutter run -d windows                # 桌面运行（2D 地图 + 真实数据库）
+flutter run -d chrome                  # 浏览器（3D 地球）
+flutter run -d windows                 # 桌面（2D 地图 + 真数据）
 
 # 代码检查
-flutter analyze                       # 静态分析（当前：0 issues）
-flutter clean && flutter pub get      # 清理 + 重装依赖
+dart analyze lib/                       # 静态分析
 ```
 
-### Windows 桌面版特殊说明
+---
 
-`flutter_inappwebview_windows` 插件的 NuGet 依赖在部分环境失败。我们的桌面端用 `earth_view_desktop.dart`（2D 地图），不需要 WebView。解决方式：
-- `windows/CMakeLists.txt`：手动管理插件列表，排除 inappwebview
-- `windows/runner/CMakeLists.txt`：使用静态 `plugin_registrant.cc`
-- `windows/flutter/plugin_registrant.{cc,h}`：仅注册 geolocator_windows
+## 🚀 下一步
+
+| 优先级 | 任务 | 说明 |
+|:--:|------|------|
+| 🔴 | **iOS 编译** | 需 macOS + Xcode，或 Codemagic CI |
+| 🔴 | **Web 数据** | Web 端用占位数据，需后端 API 或 WASM SQLite |
+| 🟡 | **剩余坐标** | ~2,000 个子地区仍用质心+微抖动 |
+| 🟡 | **分享卡片** | 生成精美图片分享微信/朋友圈 |
+| 🟢 | **i18n 国际化** | 中英文双语切换 |
+| 🟢 | **时间轴增强** | 地区详情页加趋势折线图 |
+| 🟢 | **上架商店** | 小米/华为/Google Play（需开发者账号） |
 
 ---
 
-## 🚀 未来路线图
+## ⚠️ 已知限制
 
-### 近期（1-2 周）
-| 任务 | 说明 |
-|------|------|
-| **迁移到 ASCII 路径** | 将项目移到 `D:\projects\infiltration_app`，解除 release 编译限制 |
-| **正式 APK 签名** | `flutter build apk --release` → 优化版 50MB 左右 |
-| **GPS 真机测试** | 连接手机测试自动定位 → 匹配最近地区 → 显示当月数据 |
-| **Shapefile 经纬度** | 解决 950/3614 地区坐标为 (0,0) 的问题 |
-
-### 中期（1-2 月）
-| 任务 | 说明 |
-|------|------|
-| **App 图标 + 启动屏** | 替换默认 Flutter 图标和启动白屏 |
-| **上架应用商店** | 小米应用商店 / 华为应用市场 / Google Play |
-| **iOS 适配** | 需要 Mac + Xcode + Apple Developer |
-| **时间轴动画** 🎨 | 滑动时间轴时，地图上数值平滑变化，播放 1990-2024 趋势 |
-| **热力图模式** 🎨 | 根据渗透系数值给地区着色（蓝=低，红=高），一眼看全球分布 |
-
-### 远期（创意池）🎨
-| 创意 | 描述 |
-|------|------|
-| **对比模式** | 选两个地区并排对比趋势图，一键生成对比报告 |
-| **建筑类型过滤** | 住宅/办公/学校等不同建筑类型渗透系数不同，加筛选器 |
-| **AI 摘要** | "北京冬季渗透系数通常比夏季低约 0.3，年均值 0.72……" |
-| **分享卡片** | 生成精美图片（地区+数据+地图标记），一键分享微信/朋友圈 |
-| **收藏夹** | 收藏常用地区，首页快捷访问 |
-| **离线趋势推送** | 当季渗透系数较历史同期异常时，推送提醒 |
-| **深色/浅色主题** | 自动跟随系统或手动切换 |
-| **数据导出** | 将查询结果导出为 CSV/Excel，方便写论文引用 |
-| **i18n 国际化** | 中英文切换，方便国际合作者使用 |
-| **Web 部署** | 部署到 GitHub Pages / 校内服务器，无需安装直接用 |
+| 问题 | 影响 | 方案 |
+|------|------|------|
+| Web 端无数据库 | 查询返回占位数据 | WASM SQLite 或后端 API |
+| iOS 未编译 | 仅 Android 可用 | Codemagic CI |
+| 部分子地区坐标近似 | 约 2,000 个用国家质心 | 继续扩充 geocode_progress.json |
+| GitHub Pages 偶有网络问题 | 推送不稳定 | 换 Gitee Pages 或自有服务器 |
 
 ---
 
-## ⚠️ 已知问题
+## 📂 版本备份
 
-| 问题 | 影响 | 解决方案 |
-|------|------|----------|
-| 项目路径含中文 | Release APK 编译失败 | 迁移到 ASCII 路径 |
-| C 盘仅 3.4GB | 无法安装 Android 模拟器 | USB 真机或清理磁盘 |
-| 950 地区坐标缺失 | 地图标记偏差 | Shapefile 提取省级中心点 |
-| Web 端无数据库 | 查询返回占位数据 | WASM SQLite 或服务端 API |
+共 8 个历史版本，位于 `versions/` 目录：
+
+| 版本 | 日期 | 里程碑 |
+|------|------|------|
+| v2026-06-10_初始版本 | 06-10 | 初始完成版 |
+| v2026-06-11_坐标修复版 | 06-11 | 重复卡片修复 + 坐标 100% |
+| v2026-06-11_GPS前备份 | 06-11 | GPS 开发前 |
+| v2026-06-11_GPS完成版 | 06-11 | GPS 自动定位 |
+| v2026-06-11_Release版 | 06-11 | Release 签名 + 英文路径 |
+| v2026-06-11_国家气泡版 | 06-11 | 热力图 + 时间轴 |
+| v2026-06-11_对比模式版 | 06-11 | 对比 + 洞察 + 科普 |
+| v2026-06-11_时间轴版 | 06-11 | 时间轴播放 |
+| v2026-06-11_科普修正版 | 06-11 | 科普内容修正为建筑领域 |
 
 ---
 
-*最后更新: 2026-06-11 · Git HEAD: 9132b99*
+*最后更新：2026-06-13 · 仓库：https://github.com/otivvito/infiltration-app*
