@@ -12,8 +12,9 @@ import 'services/heatmap_service.dart';
 
 class EarthView extends StatefulWidget {
   final void Function(bool loaded)? onPageLoaded;
+  final VoidCallback? onHeatmapChanged;
 
-  const EarthView({super.key, this.onPageLoaded});
+  const EarthView({super.key, this.onPageLoaded, this.onHeatmapChanged});
 
   @override
   State<EarthView> createState() => EarthViewState();
@@ -52,6 +53,7 @@ class EarthViewState extends State<EarthView>
         _heatmapPicture = null;
         _heatmapPlaying = false;
       });
+      widget.onHeatmapChanged?.call();
       return;
     }
 
@@ -83,6 +85,7 @@ class EarthViewState extends State<EarthView>
           _heatmapLoading = false;
           _heatmapPicture = pic;
         });
+        widget.onHeatmapChanged?.call();
       }
     } catch (_) {
       if (mounted) setState(() => _heatmapLoading = false);

@@ -10,8 +10,9 @@ import 'package:flutter/services.dart';
 
 class EarthView extends StatefulWidget {
   final void Function(bool loaded)? onPageLoaded;
+  final VoidCallback? onHeatmapChanged;
 
-  const EarthView({super.key, this.onPageLoaded});
+  const EarthView({super.key, this.onPageLoaded, this.onHeatmapChanged});
 
   @override
   State<EarthView> createState() => EarthViewState();

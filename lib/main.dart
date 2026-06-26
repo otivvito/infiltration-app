@@ -29,11 +29,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Infiltration',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(),
-      home: const StringsScope(child: GlobePage()),
+    return StringsScope(
+      child: MaterialApp(
+        title: 'Infiltration',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData.dark(),
+        home: const GlobePage(),
+      ),
     );
   }
 }
@@ -556,11 +558,13 @@ class _GlobePageState extends State<GlobePage> {
             key: _earthKey,
             onPageLoaded: (loaded) {
               setState(() => _earthLoaded = loaded);
-              // 首次加载完成后自动定位
               if (loaded && !_autoLocateDone) {
                 _autoLocateDone = true;
                 _locateMe();
               }
+            },
+            onHeatmapChanged: () {
+              if (mounted) setState(() => _heatmapOn = _earthKey.currentState?.heatmapOn ?? false);
             },
           ),
 
