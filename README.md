@@ -1,4 +1,4 @@
-# 🌍 渗透系数查询系统
+# 🌍 渗透系数查询系统 v1.1
 
 > 基于 Flutter 的跨平台应用，查询全球建筑室内空气渗透系数。
 >
@@ -6,13 +6,21 @@
 
 ---
 
-## 📱 安装
+## 📱 获取应用
 
 ### Android
 
-下载 APK 安装：
-- **Release**（推荐）：`build/app/outputs/flutter-apk/app-release.apk`（149MB）
-- **Debug**：`build/app/outputs/flutter-apk/app-debug.apk`（267MB）
+下载 APK 安装（**需要重新编译 v1.1**）：
+
+```bash
+cd D:/SRT/infiltration_app
+flutter build apk --release
+```
+
+输出：`build/app/outputs/flutter-apk/app-release.apk`
+
+> ⚠️ 当前已安装的 APK 是 v1.0 版本，不含今天新增的分享卡片、i18n、趋势图等功能。
+> 运行上述命令重新编译即可获得 v1.1。
 
 ### Web
 
@@ -20,7 +28,7 @@
 https://otivvito.github.io/infiltration-app
 ```
 
-> ⚠️ Web 版使用占位数据（SQLite 不支持浏览器），完整数据需 Android/Windows 版。
+> ⚠️ Web 版需要配合后端 API 才能显示真实数据。后端部署说明见下方。
 
 ### Windows
 
@@ -28,13 +36,21 @@ https://otivvito.github.io/infiltration-app
 flutter run -d windows
 ```
 
-### iOS
+---
 
-需要 macOS + Xcode。推荐使用 Codemagic CI 云端构建。
+## 🆕 v1.1 更新 (2026-06-26)
+
+| 功能 | 说明 |
+|------|------|
+| 🌐 **Web 真数据** | Dart Shelf 后端 API + Render.com 部署，Web 端不再用占位数据 |
+| 📤 **分享卡片** | 查询结果一键分享，生成精美图片卡片（Mobile）或文本（Web） |
+| 🌏 **中英文双语** | AppBar 右上角 `中`/`EN` 按钮，即时切换全部 UI 语言 |
+| 📈 **趋势折线图** | 查询地区后显示 1990-2024 年渗透系数变化趋势曲线 |
+| 🔌 **开发插件** | 集成 Claude Code 3 个插件：Wingspan + dev-process-toolkit + Full Stack 2.0 |
 
 ---
 
-## ✨ 功能
+## ✨ 全部功能
 
 | 功能 | 说明 |
 |------|------|
@@ -45,8 +61,11 @@ flutter run -d windows
 | ⏳ **时间轴** | 拖动滑块 + 播放动画，看 35 年全球变化 |
 | ⚖️ **对比模式** | 两地区并排对比，色条 + 表格 + 差异箭头 |
 | 📊 **数据洞察** | 全球排名、时间趋势、月度特征——纯本地计算 |
+| 📈 **趋势折线图** | CustomPaint 手绘 1990-2024 趋势曲线 🆕 |
+| 📤 **分享卡片** | 生成精美图片分享微信/朋友圈 🆕 |
 | ⭐ **收藏夹** | 收藏常用地区，底部弹窗快速访问，左滑删除 |
 | ℹ️ **科普页** | 右上角 (i) 按钮，解释渗透系数的建筑学意义 |
+| 🌏 **中英文双语** | AppBar `中`/`EN` 一键切换 🆕 |
 | 🎨 **自定义图标** | 地球+水滴主题，自适应图标（Android 8+） |
 
 ---
@@ -56,70 +75,62 @@ flutter run -d windows
 ```
 lib/
 ├── main.dart                         # App 入口，状态管理
-├── earth_view_web.dart               # Web : IFrameElement + Three.js
-├── earth_view_mobile.dart            # Android : InAppWebView + 3D 地球
-├── earth_view_desktop.dart           # Windows : 2D CustomPaint 地图
-├── earth_view_native.dart            # 平台路由（条件导出）
+├── i18n/
+│   └── strings.dart                  # 中英文翻译（InheritedWidget 传播）
 ├── services/
 │   ├── region_service.dart           # 地区搜索与坐标
 │   ├── database_helper_mobile.dart   # SQLite (sqflite + ffi)
-│   ├── database_helper_stub.dart     # Web 存根
+│   ├── database_helper_web.dart      # HTTP API 调用（Web）🆕
+│   ├── database_helper_stub.dart     # Web 存根（已废弃）
 │   ├── location_service.dart         # GPS + Haversine 最近地区
 │   ├── heatmap_service.dart          # 热力图：国家聚合 + log 缩放
-│   ├── insight_service.dart          # 数据洞察：排名/趋势/月度
+│   ├── insight_service.dart          # 数据洞察：排名/趋势/月度/趋势序列
 │   └── favorites_service.dart        # 收藏夹 JSON 持久化
 ├── ui/
 │   ├── search_dialog.dart            # 搜索 → 国家 → 地区 → 年月
 │   ├── compare_page.dart             # 两地区并排对比
-│   └── info_page.dart                # 渗透系数科普
+│   ├── info_page.dart                # 渗透系数科普
+│   ├── share_card.dart               # 分享卡片（Mobile：图片 + 系统分享）🆕
+│   ├── share_card_stub.dart          # 分享卡片（Web：纯文本）🆕
+│   └── trend_chart.dart              # 趋势折线图（CustomPaint 手绘）🆕
 ├── painters/
 │   └── world_map_painter.dart        # 墨卡托投影 + Picture 预渲染
 └── data/
     └── world_outlines.dart           # 大洲轮廓坐标
-```
 
-**平台自适应：**
-```
-main.dart
-  ├─ Web     → earth_view_web       (3D Three.js + HTML overlay)
-  └─ Native  → earth_view_native
-                 ├─ Android/iOS  → earth_view_mobile   (WebView 3D)
-                 └─ Desktop      → earth_view_desktop  (CustomPaint 2D)
+backend/                              # 🆕 Dart Shelf REST API
+├── bin/server.dart                   # 入口，监听 $PORT
+├── lib/database.dart                 # SQLite 数据访问层
+├── lib/routes.dart                   # 6 个 API 端点 + CORS
+└── pubspec.yaml
 ```
 
 ---
 
-## 📋 开发记录（2026-06-10 ~ 06-13）
+## 🚀 Web 后端部署
 
-### 基础架构
-- ✅ 3D 地球（Three.js）+ 2D 地图（CustomPaint 墨卡托）
-- ✅ 搜索 UI（252 国 → 3,614 地区 → 年月 + 计数）
-- ✅ 6 项统计指标（均值/中位数/CI95/CI75）
-- ✅ 平台自适应（Web / Android / Windows）
-- ✅ Release 签名（upload-keystore.jks）
-- ✅ 项目迁移至 ASCII 路径 `D:\SRT\infiltration_app`
-- ✅ Debug + Release APK 编译成功
+### 部署到 Render.com
 
-### 坐标数据
-- ✅ 950 → 0 个 (0,0) 坐标（Open-Meteo + 手动修正 16 国）
-- ✅ 中美 84 省/州真实坐标（手工录入）
-- ✅ 1,498 个全球子地区精确坐标（Open-Meteo API 批量）
-- ✅ 总计 1,582/3,614 个地区有真实坐标
+1. 将仓库推送到 GitHub（`render.yaml` 自动识别）
+2. Render.com Dashboard → New Web Service → 连接仓库
+3. 设置环境变量 `INFILTRATION_DB_PATH=/data/infiltration.db`
+4. 部署完成后获得 API URL（如 `https://infiltration-api.onrender.com`）
 
-### 功能特性
-- ✅ GPS 自动定位（三级降级策略：缓存→低精度超时→提示）
-- ✅ 热力图（252 国气泡 + 时间轴 1990-2024 + 播放动画）
-- ✅ 对比模式（两地区并排 + 色条 + 表格 + 箭头）
-- ✅ 数据洞察（全球排名、时间趋势、月度特征，纯本地计算）
-- ✅ 收藏夹（☆ 切换收藏、底部弹窗列表、左滑删除）
-- ✅ 科普说明页（右上角 i 按钮）
-- ✅ 自定义应用图标（地球+水滴主题）
-- ✅ 版本备份机制（versions/ 文件夹，7 个历史版本）
+### 构建 Web 前端
 
-### Web 部署
-- ✅ Web 编译成功（`flutter build web`）
-- ✅ GitHub Pages 部署（`otivvito.github.io/infiltration-app`）
-- ⚠️ base href 偶有网络问题，需手动修复
+```bash
+flutter build web --dart-define=API_BASE_URL=https://infiltration-api.onrender.com
+```
+
+### 本地开发
+
+```bash
+# 启动后端（需要 infiltration.db 在 assets/ 目录）
+cd backend && dart run bin/server.dart
+
+# 启动 Web 前端（连接本地 API）
+cd .. && flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8080
+```
 
 ---
 
@@ -130,9 +141,9 @@ main.dart
 cd D:/SRT/infiltration_app
 
 # 编译
-flutter build apk --release            # Android Release APK (149MB)
-flutter build apk --debug              # Android Debug APK (267MB)
-flutter build web --base-href "//infiltration-app/"   # Web 版
+flutter build apk --release            # Android Release APK
+flutter build apk --debug              # Android Debug APK
+flutter build web --dart-define=API_BASE_URL=https://YOUR_API_URL  # Web 版
 flutter build windows --debug          # Windows 桌面版
 
 # 运行
@@ -140,22 +151,38 @@ flutter run -d chrome                  # 浏览器（3D 地球）
 flutter run -d windows                 # 桌面（2D 地图 + 真数据）
 
 # 代码检查
-dart analyze lib/                       # 静态分析
+dart analyze lib/                      # 前端静态分析
+dart analyze backend/                  # 后端静态分析
+
+# 后端本地启动
+cd backend && dart run bin/server.dart
 ```
 
 ---
 
-## 🚀 下一步
+## 📋 开发记录
 
-| 优先级 | 任务 | 说明 |
-|:--:|------|------|
-| 🔴 | **iOS 编译** | 需 macOS + Xcode，或 Codemagic CI |
-| 🔴 | **Web 数据** | Web 端用占位数据，需后端 API 或 WASM SQLite |
-| 🟡 | **剩余坐标** | ~2,000 个子地区仍用质心+微抖动 |
-| 🟡 | **分享卡片** | 生成精美图片分享微信/朋友圈 |
-| 🟢 | **i18n 国际化** | 中英文双语切换 |
-| 🟢 | **时间轴增强** | 地区详情页加趋势折线图 |
-| 🟢 | **上架商店** | 小米/华为/Google Play（需开发者账号） |
+### v1.1 (2026-06-26)
+- ✅ Web 真数据：Dart Shelf 后端 + 6 个 REST API 端点
+- ✅ Web HTTP 数据源：database_helper_web.dart + LRU 缓存
+- ✅ Docker 部署配置 + Render.com Blueprint
+- ✅ 分享卡片：RepaintBoundary 截图 + share_plus 系统分享
+- ✅ i18n 中英文双语：Strings 类 + InheritedWidget + 8 文件翻译
+- ✅ 趋势折线图：CustomPaint 贝塞尔曲线，零新增依赖
+- ✅ Claude Code 开发插件安装（Wingspan + dev-process-toolkit + Full Stack 2.0）
+- ✅ 条件导入全面适配（6 个文件 Web/Mobile 双通道）
+
+### v1.0 (2026-06-10 ~ 06-13)
+- ✅ 3D 地球（Three.js）+ 2D 地图（CustomPaint 墨卡托）
+- ✅ 搜索 UI（252 国 → 3,614 地区 → 年月 + 计数）
+- ✅ 6 项统计指标（均值/中位数/CI95/CI75）
+- ✅ 平台自适应（Web / Android / Windows）
+- ✅ Release 签名（upload-keystore.jks）
+- ✅ 坐标数据 100% 覆盖（3,614/3,614 非零坐标）
+- ✅ GPS 自动定位（三级降级策略）
+- ✅ 热力图（252 国气泡 + 时间轴 1990-2024 + 播放动画）
+- ✅ 对比模式 + 数据洞察 + 收藏夹 + 科普说明页
+- ✅ 自定义应用图标 + 8 个历史版本备份
 
 ---
 
@@ -163,29 +190,17 @@ dart analyze lib/                       # 静态分析
 
 | 问题 | 影响 | 方案 |
 |------|------|------|
-| Web 端无数据库 | 查询返回占位数据 | WASM SQLite 或后端 API |
-| iOS 未编译 | 仅 Android 可用 | Codemagic CI |
-| 部分子地区坐标近似 | 约 2,000 个用国家质心 | 继续扩充 geocode_progress.json |
+| Web 端需后端 API | 需先部署后端才有真数据 | Render.com 免费部署 |
+| iOS 未编译 | 仅 Android/Windows/Web 可用 | Codemagic CI 或本地 macOS |
 | GitHub Pages 偶有网络问题 | 推送不稳定 | 换 Gitee Pages 或自有服务器 |
+| GitHub 推送需网络畅通 | 偶尔 Connection reset | 重试或使用代理 |
 
 ---
 
 ## 📂 版本备份
 
-共 8 个历史版本，位于 `versions/` 目录：
-
-| 版本 | 日期 | 里程碑 |
-|------|------|------|
-| v2026-06-10_初始版本 | 06-10 | 初始完成版 |
-| v2026-06-11_坐标修复版 | 06-11 | 重复卡片修复 + 坐标 100% |
-| v2026-06-11_GPS前备份 | 06-11 | GPS 开发前 |
-| v2026-06-11_GPS完成版 | 06-11 | GPS 自动定位 |
-| v2026-06-11_Release版 | 06-11 | Release 签名 + 英文路径 |
-| v2026-06-11_国家气泡版 | 06-11 | 热力图 + 时间轴 |
-| v2026-06-11_对比模式版 | 06-11 | 对比 + 洞察 + 科普 |
-| v2026-06-11_时间轴版 | 06-11 | 时间轴播放 |
-| v2026-06-11_科普修正版 | 06-11 | 科普内容修正为建筑领域 |
+共 8 个历史版本，位于 `versions/` 目录（v1.0 时代）。
 
 ---
 
-*最后更新：2026-06-13 · 仓库：https://github.com/otivvito/infiltration-app*
+*最后更新：2026-06-26 · 仓库：https://github.com/otivvito/infiltration-app*
