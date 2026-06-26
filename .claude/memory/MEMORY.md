@@ -1,0 +1,4 @@
+- [Web Backend Implementation 2026-06-26](2026-06-26-web-backend-implementation.md) — Dart Shelf 后端 + Web HTTP helper + Docker 部署配置
+- [Share Card Feature 2026-06-26](2026-06-26-share-card.md) — 分享卡片：RepaintBoundary 截图 + share_plus 系统分享
+- [i18n Bilingual Support 2026-06-26](2026-06-26-i18n.md) — 中英文双语切换，6 个 UI 文件全量翻译
+- [Trend Chart 2026-06-26](2026-06-26-trend-chart.md) — 趋势折线图：CustomPaint 手绘，查询后显示 1990-2024 趋势

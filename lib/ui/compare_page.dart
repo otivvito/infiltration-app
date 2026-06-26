@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../services/database_helper_mobile.dart';
+import '../i18n/strings.dart';
+import '../services/database_helper_mobile.dart'
+    if (dart.library.html) '../services/database_helper_web.dart';
 import '../services/region_service.dart';
 import 'search_dialog.dart';
 
@@ -70,7 +72,7 @@ class _ComparePageState extends State<ComparePage> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('对比模式'),
+        title: Text(Strings.of(context).compareTitle),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -119,7 +121,7 @@ class _ComparePageState extends State<ComparePage> {
         child: Column(
           children: [
             Text(
-              region?.displayName ?? '点击选择',
+              region?.displayName ?? Strings.of(context).compareSelect,
               style: TextStyle(
                 color: region != null ? Colors.white : Colors.grey,
                 fontSize: 14,
@@ -148,11 +150,11 @@ class _ComparePageState extends State<ComparePage> {
         children: [
           const Text('📭', style: TextStyle(fontSize: 36)),
           const SizedBox(height: 8),
-          Text('${missing.join('、')} 暂无数据',
+          Text('${missing.join(', ')} ${Strings.of(context).noData}',
               style: const TextStyle(color: Colors.grey, fontSize: 14)),
           const SizedBox(height: 4),
-          const Text('请尝试其他年份或月份',
-              style: TextStyle(color: Colors.grey, fontSize: 12)),
+          Text(Strings.of(context).tryOtherTime,
+              style: const TextStyle(color: Colors.grey, fontSize: 12)),
         ],
       ),
     );
@@ -261,13 +263,14 @@ class _ComparePageState extends State<ComparePage> {
   Widget _buildDetailTable() {
     final a = _recordA!;
     final b = _recordB!;
+    final s = Strings.of(context);
     final rows = [
-      ('均值 (Mean)', a.mean, b.mean),
-      ('中位数 (Median)', a.median, b.median),
-      ('95% CI 下限', a.ci95Low, b.ci95Low),
-      ('95% CI 上限', a.ci95High, b.ci95High),
-      ('75% CI 下限', a.ci75Low, b.ci75Low),
-      ('75% CI 上限', a.ci75High, b.ci75High),
+      (s.meanLabel, a.mean, b.mean),
+      (s.medianLabel, a.median, b.median),
+      ('95% CI ${s.lowerBound}', a.ci95Low, b.ci95Low),
+      ('95% CI ${s.upperBound}', a.ci95High, b.ci95High),
+      ('75% CI ${s.lowerBound}', a.ci75Low, b.ci75Low),
+      ('75% CI ${s.upperBound}', a.ci75High, b.ci75High),
     ];
 
     return Table(
@@ -276,10 +279,10 @@ class _ComparePageState extends State<ComparePage> {
       children: [
         TableRow(
           decoration: BoxDecoration(color: Colors.grey[900]),
-          children: const [
-            Padding(padding: EdgeInsets.all(8), child: Text('指标', style: TextStyle(color: Colors.grey, fontSize: 12))),
-            Padding(padding: EdgeInsets.all(8), child: Text('地区 A', style: TextStyle(color: Colors.blue, fontSize: 12))),
-            Padding(padding: EdgeInsets.all(8), child: Text('地区 B', style: TextStyle(color: Colors.orange, fontSize: 12))),
+          children: [
+            Padding(padding: EdgeInsets.all(8), child: Text(Strings.of(context).indicator, style: TextStyle(color: Colors.grey, fontSize: 12))),
+            Padding(padding: EdgeInsets.all(8), child: Text(Strings.of(context).regionA, style: TextStyle(color: Colors.blue, fontSize: 12))),
+            Padding(padding: EdgeInsets.all(8), child: Text(Strings.of(context).regionB, style: TextStyle(color: Colors.orange, fontSize: 12))),
           ],
         ),
         ...rows.map((r) {

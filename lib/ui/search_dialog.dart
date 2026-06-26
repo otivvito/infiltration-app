@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../i18n/strings.dart';
 import '../services/region_service.dart';
 
 /// 搜索结果：地区 + 年月
@@ -37,10 +38,11 @@ class _SearchDialogState extends State<SearchDialog> {
   String _searchQuery = '';
   List<Region> _searchResults = [];
 
-  static const _months = [
-    '1月', '2月', '3月', '4月', '5月', '6月',
-    '7月', '8月', '9月', '10月', '11月', '12月',
-  ];
+  static List<String> _months(BuildContext context) {
+    final s = Strings.of(context);
+    final en = s.locale == AppLocale.en;
+    return List.generate(12, (i) => en ? '${i + 1}' : '${i + 1}月');
+  }
 
   @override
   void dispose() {
@@ -53,7 +55,7 @@ class _SearchDialogState extends State<SearchDialog> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text(_step == 2 ? '选择时间' : '选择地区'),
+        title: Text(_step == 2 ? Strings.of(context).selectTime : Strings.of(context).selectRegion),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -96,7 +98,7 @@ class _SearchDialogState extends State<SearchDialog> {
           child: TextField(
             autofocus: false,
             decoration: InputDecoration(
-              hintText: '搜索地区名称...',
+              hintText: Strings.of(context).searchHint,
               hintStyle: const TextStyle(color: Colors.grey),
               prefixIcon: const Icon(Icons.search, color: Colors.grey),
               filled: true,
@@ -122,8 +124,8 @@ class _SearchDialogState extends State<SearchDialog> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Text(
               _searchResults.isEmpty
-                  ? '未找到匹配地区'
-                  : '找到 ${_searchResults.length} 个地区',
+                  ? Strings.of(context).noMatch
+                  : Strings.of(context).foundCount(_searchResults.length),
               style: const TextStyle(color: Colors.grey, fontSize: 13),
             ),
           ),
@@ -132,9 +134,9 @@ class _SearchDialogState extends State<SearchDialog> {
         Expanded(
           child: _searchQuery.isNotEmpty
               ? (_searchResults.isEmpty
-                  ? const Center(
-                      child: Text('没有匹配的地区名称\n请尝试其他关键词',
-                          style: TextStyle(color: Colors.grey, fontSize: 14),
+                  ? Center(
+                      child: Text(Strings.of(context).searchPrompt(_searchQuery),
+                          style: const TextStyle(color: Colors.grey, fontSize: 14),
                           textAlign: TextAlign.center),
                     )
                   : ListView.builder(
@@ -154,7 +156,7 @@ class _SearchDialogState extends State<SearchDialog> {
                     if (i == 0) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: Text('共 ${_service.countries.length} 个国家/地区',
+                        child: Text(Strings.of(context).countryCount(_service.countries.length),
                             style: const TextStyle(color: Colors.grey, fontSize: 13)),
                       );
                     }
@@ -163,7 +165,7 @@ class _SearchDialogState extends State<SearchDialog> {
                     final count = _service.regionsForCountry(c).length;
                     return ListTile(
                       title: Text(c, style: const TextStyle(color: Colors.white)),
-                      trailing: Text('$count 个地区',
+                      trailing: Text(Strings.of(context).regionCount(count),
                           style: const TextStyle(color: Colors.grey, fontSize: 13)),
                       onTap: () {
                         setState(() {
@@ -253,7 +255,7 @@ class _SearchDialogState extends State<SearchDialog> {
               const SizedBox(height: 32),
 
               // 年份选择（←→ 箭头 + 拖拽 + Shift滚轮）
-              const Text('年份', style: TextStyle(color: Colors.grey, fontSize: 14)),
+              Text(Strings.of(context).year, style: const TextStyle(color: Colors.grey, fontSize: 14)),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -340,7 +342,7 @@ class _SearchDialogState extends State<SearchDialog> {
               const SizedBox(height: 24),
 
               // 月份选择
-              const Text('月份', style: TextStyle(color: Colors.grey, fontSize: 14)),
+              Text(Strings.of(context).month, style: const TextStyle(color: Colors.grey, fontSize: 14)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -348,6 +350,7 @@ class _SearchDialogState extends State<SearchDialog> {
                 children: List.generate(12, (i) {
                   final m = i + 1;
                   final selected = m == _selectedMonth;
+                  final months = _months(context);
                   return GestureDetector(
                     onTap: () => setState(() => _selectedMonth = m),
                     child: Container(
@@ -359,7 +362,7 @@ class _SearchDialogState extends State<SearchDialog> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
-                        _months[i],
+                        months[i],
                         style: TextStyle(
                           color: selected ? Colors.white : Colors.grey,
                           fontWeight: selected ? FontWeight.bold : FontWeight.normal,
@@ -383,7 +386,7 @@ class _SearchDialogState extends State<SearchDialog> {
             color: Colors.black,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withAlpha(200),
+                color: Colors.black.withValues(alpha: 0.78),
                 blurRadius: 8,
                 offset: const Offset(0, -2),
               ),
@@ -404,7 +407,7 @@ class _SearchDialogState extends State<SearchDialog> {
                 );
               },
               icon: const Icon(Icons.search),
-              label: const Text('查询渗透系数'),
+              label: Text(Strings.of(context).appTitle),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,

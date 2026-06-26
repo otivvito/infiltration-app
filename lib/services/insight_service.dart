@@ -1,4 +1,6 @@
-import 'database_helper_mobile.dart';
+import 'database_helper_mobile.dart'
+    if (dart.library.html) 'database_helper_web.dart';
+import '../i18n/strings.dart';
 
 /// 一条数据洞察
 class InsightLine {
@@ -12,10 +14,29 @@ class InsightService {
   static final InsightService instance = InsightService._();
   InsightService._();
 
+  /// Fetch the full 1990-2024 year-value series for a region/month (for charts).
+  Future<List<Map<String, double>>?> getTrendSeries(int regionId, int month) async {
+    final db = DatabaseHelper.instance;
+    try {
+      final rows = await db.rawQuery(
+        'SELECT year, value_mean FROM infiltration_data WHERE region_id=? AND month=? AND value_mean IS NOT NULL ORDER BY year',
+        [regionId, month],
+      );
+      if (rows.length < 2) return null;
+      return rows.map((r) => {
+            'year': (r['year'] as num).toDouble(),
+            'value': (r['value_mean'] as num).toDouble(),
+          }).toList();
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// 生成一个地区的全套洞察
   Future<List<InsightLine>> generate(int regionId, int year, int month, double currentMean) async {
     final db = DatabaseHelper.instance;
     final insights = <InsightLine>[];
+    final s = Strings(Strings.currentLocale);
 
     // 1. 全球排名
     final globalRank = await _computeGlobalRank(db, year, month, currentMean);
@@ -23,21 +44,24 @@ class InsightService {
       final pct = (globalRank['rank']! / globalRank['total']! * 100).toStringAsFixed(0);
       insights.add(InsightLine(
         icon: '🏆',
-        text: '全球排名：在 ${globalRank['total']} 个地区中排名约第 ${globalRank['rank']} 名'
-            '（前 $pct%），渗透系数${currentMean.toStringAsFixed(4)}',
+        text: s.globalRank(globalRank['rank']!, globalRank['total']!, pct, currentMean.toStringAsFixed(4)),
       ));
     }
 
     // 2. 时间趋势
     final trend = await _computeTrend(db, regionId, month);
     if (trend != null) {
-      final dir = trend['slope']! > 0 ? '上升' : '下降';
+      final dir = trend['slope']! > 0
+          ? (s.locale == AppLocale.en ? 'up' : '上升')
+          : (s.locale == AppLocale.en ? 'down' : '下降');
+      final dirEn = trend['slope']! > 0 ? 'up' : 'down';
       final pctChange = ((trend['last']! - trend['first']!) / trend['first']! * 100).abs();
       insights.add(InsightLine(
         icon: '📈',
-        text: '时间趋势：1990-2024 年呈${dir}趋势，'
-            '从 ${trend['first']!.toStringAsFixed(4)} 变为 ${trend['last']!.toStringAsFixed(4)}'
-            '（${dir} ${pctChange.toStringAsFixed(0)}%）',
+        text: s.trendText(
+          dir, trend['first']!.toStringAsFixed(4), trend['last']!.toStringAsFixed(4),
+          dirEn, '${pctChange.toStringAsFixed(0)}%',
+        ),
       ));
     }
 
@@ -46,8 +70,10 @@ class InsightService {
     if (monthly != null) {
       insights.add(InsightLine(
         icon: '📅',
-        text: '月度特征：${monthly['highMonth']}月最高（均值 ${monthly['highVal']!.toStringAsFixed(4)}），'
-            '${monthly['lowMonth']}月最低（均值 ${monthly['lowVal']!.toStringAsFixed(4)}）',
+        text: s.monthlyPattern(
+          monthly['highMonth'] as int, (monthly['highVal'] as double).toStringAsFixed(4),
+          monthly['lowMonth'] as int, (monthly['lowVal'] as double).toStringAsFixed(4),
+        ),
       ));
     }
 

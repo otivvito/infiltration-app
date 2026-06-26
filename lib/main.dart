@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'earth_view_native.dart'
     if (dart.library.html) 'earth_view_web.dart';
 import 'services/database_helper_mobile.dart'
-    if (dart.library.html) 'services/database_helper_stub.dart';
+    if (dart.library.html) 'services/database_helper_web.dart';
 import 'services/favorites_service.dart';
 import 'services/insight_service.dart';
 import 'services/location_service.dart';
@@ -12,6 +12,10 @@ import 'services/region_service.dart';
 import 'ui/compare_page.dart';
 import 'ui/info_page.dart';
 import 'ui/search_dialog.dart';
+import 'ui/share_card.dart'
+    if (dart.library.html) 'ui/share_card_stub.dart';
+import 'ui/trend_chart.dart';
+import 'i18n/strings.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,10 +30,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '渗透系数查询',
+      title: 'Infiltration',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      home: const GlobePage(),
+      home: const StringsScope(child: GlobePage()),
     );
   }
 }
@@ -43,7 +47,7 @@ class GlobePage extends StatefulWidget {
 
 class _GlobePageState extends State<GlobePage> {
   final GlobalKey<EarthViewState> _earthKey = GlobalKey<EarthViewState>();
-  String _regionName = '未选择';
+  late String _regionName;
   InfiltrationRecord? _record;
   int? _year;
   int? _month;
@@ -53,13 +57,18 @@ class _GlobePageState extends State<GlobePage> {
   bool _autoLocateDone = false;
   bool _heatmapOn = false;
   List<InsightLine>? _insights;
+  List<TrendPoint>? _trendData;
+  double? _trendSlope;
+  double? _trendFirst;
+  double? _trendLast;
   bool _isFavorited = false;
   int? _regionId;
+  final ShareCardGenerator _shareCard = ShareCardGenerator();
 
   @override
   void initState() {
     super.initState();
-    // Web 端 HTML 搜索按钮点击时触发此回调
+    _regionName = Strings.of(context).notSelected;
     EarthViewState.onSearchTap = _openSearch;
   }
 
@@ -92,8 +101,32 @@ class _GlobePageState extends State<GlobePage> {
       InsightService.instance.generate(r.id, result.year, result.month, record.mean!).then((list) {
         if (mounted) setState(() => _insights = list);
       });
+      // 异步加载趋势数据
+      InsightService.instance.getTrendSeries(r.id, result.month).then((series) {
+        if (mounted && series != null) {
+          setState(() {
+            _trendData = series.map((m) => TrendPoint(
+              year: m['year']!.toInt(),
+              value: m['value']!,
+            )).toList();
+            if (_trendData!.length >= 2) {
+              _trendFirst = _trendData!.first.value;
+              _trendLast = _trendData!.last.value;
+              final n = _trendData!.length;
+              double sx = 0, sy = 0, sxy = 0, sx2 = 0;
+              for (int i = 0; i < n; i++) {
+                final x = i.toDouble();
+                final y = _trendData![i].value;
+                sx += x; sy += y; sxy += x * y; sx2 += x * x;
+              }
+              _trendSlope = (n * sxy - sx * sy) / (n * sx2 - sx * sx);
+            }
+          });
+        }
+      });
     } else {
       _insights = null;
+      _trendData = null;
     }
 
     // 有真实数据用真实数据，否则降级为占位值
@@ -167,9 +200,10 @@ class _GlobePageState extends State<GlobePage> {
       if (!mounted) return;
 
       if (position == null) {
+        final s = Strings.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(locService.lastError ?? '定位失败'),
+            content: Text(locService.lastError ?? s.locateFailed),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -183,7 +217,7 @@ class _GlobePageState extends State<GlobePage> {
 
       if (nearest == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('未找到附近地区')),
+          SnackBar(content: Text(Strings.of(context).noNearbyRegion)),
         );
         return;
       }
@@ -208,7 +242,7 @@ class _GlobePageState extends State<GlobePage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('📍 最近：${r.displayName}（$distStr）'),
+            content: Text(Strings.of(context).nearest(r.displayName, distStr)),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -271,8 +305,9 @@ class _GlobePageState extends State<GlobePage> {
     final hasRecord = _record != null;
     final hasData = hasRecord && _record!.hasData;
     final isInitial = !hasRecord && !_loading;
+    final strings = Strings.of(context);
     final timeStr = (_year != null && _month != null)
-        ? '$_year年$_month月'
+        ? strings.yearMonth(_year!, _month!)
         : null;
 
     return Card(
@@ -296,47 +331,74 @@ class _GlobePageState extends State<GlobePage> {
                   ),
                 ),
                 if (_record != null && _record!.hasData)
-                  GestureDetector(
-                    onTap: () async {
-                      if (_regionId == null || _year == null || _month == null) return;
-                      final favService = FavoritesService.instance;
-                      if (_isFavorited) {
-                        await favService.removeByKey(_regionId!, _year!, _month!);
-                        if (mounted) {
-                          setState(() => _isFavorited = false);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('已取消收藏'), duration: Duration(seconds: 1)),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Share button
+                      GestureDetector(
+                        onTap: () async {
+                          if (_regionId == null || _year == null || _month == null) return;
+                          final country = _regionName.contains(', ')
+                              ? _regionName.split(', ').last
+                              : _regionName;
+                          await _shareCard.share(
+                            context: context,
+                            regionName: _regionName,
+                            country: country,
+                            year: _year!,
+                            month: _month!,
+                            record: _record!,
                           );
-                        }
-                      } else {
-                        await favService.add(
-                          _regionId!, _regionName,
-                          _regionName.contains(',') ? _regionName.split(', ').last : _regionName,
-                          _year!, _month!,
-                        );
-                        if (mounted) {
-                          setState(() => _isFavorited = true);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('已收藏'), duration: Duration(seconds: 1)),
-                          );
-                        }
-                      }
-                    },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _isFavorited ? Icons.star : Icons.star_border,
-                          color: _isFavorited ? Colors.amber : Colors.grey,
-                          size: 20,
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.only(right: 12),
+                          child: Icon(Icons.share, color: Colors.white54, size: 20),
                         ),
-                        const SizedBox(width: 2),
-                        Text(
-                          _isFavorited ? '已收藏' : '收藏',
-                          style: TextStyle(color: _isFavorited ? Colors.amber : Colors.grey, fontSize: 11),
+                      ),
+                      // Favorite button
+                      GestureDetector(
+                        onTap: () async {
+                          if (_regionId == null || _year == null || _month == null) return;
+                          final favService = FavoritesService.instance;
+                          if (_isFavorited) {
+                            await favService.removeByKey(_regionId!, _year!, _month!);
+                            if (mounted) {
+                              setState(() => _isFavorited = false);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(strings.unfavorited), duration: const Duration(seconds: 1)),
+                              );
+                            }
+                          } else {
+                            await favService.add(
+                              _regionId!, _regionName,
+                              _regionName.contains(',') ? _regionName.split(', ').last : _regionName,
+                              _year!, _month!,
+                            );
+                            if (mounted) {
+                              setState(() => _isFavorited = true);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(strings.favorited), duration: const Duration(seconds: 1)),
+                              );
+                            }
+                          }
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _isFavorited ? Icons.star : Icons.star_border,
+                              color: _isFavorited ? Colors.amber : Colors.grey,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              _isFavorited ? strings.favorited : strings.favorite,
+                              style: TextStyle(color: _isFavorited ? Colors.amber : Colors.grey, fontSize: 11),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
               ],
             ),
@@ -350,57 +412,67 @@ class _GlobePageState extends State<GlobePage> {
             if (_loading) ...[
               const Center(child: CircularProgressIndicator()),
             ] else if (isInitial) ...[
-              const Center(
+              Center(
                 child: Column(
                   children: [
-                    Text('🔍', style: TextStyle(fontSize: 28)),
-                    SizedBox(height: 6),
-                    Text('点击搜索按钮查询地区渗透系数',
-                        style: TextStyle(fontSize: 14, color: Colors.grey)),
+                    const Text('🔍', style: TextStyle(fontSize: 28)),
+                    const SizedBox(height: 6),
+                    Text(strings.searchTapHint,
+                        style: const TextStyle(fontSize: 14, color: Colors.grey)),
                   ],
                 ),
               ),
             ] else if (!hasData) ...[
-              const Center(
+              Center(
                 child: Column(
                   children: [
-                    Text('📭', style: TextStyle(fontSize: 28)),
-                    SizedBox(height: 6),
-                    Text('暂无该地区数据', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                    const Text('📭', style: TextStyle(fontSize: 28)),
+                    const SizedBox(height: 6),
+                    Text(strings.noData, style: const TextStyle(fontSize: 14, color: Colors.grey)),
                   ],
                 ),
               ),
             ] else ...[
               // 均值 & 中位数
-              _statRow('均值 (Mean)', _record!.mean),
-              _statRow('中位数 (Median)', _record!.median),
+              _statRow(strings.meanLabel, _record!.mean),
+              _statRow(strings.medianLabel, _record!.median),
               const Divider(color: Colors.white24, height: 16),
               // 95% 置信区间
-              const Text('95% 置信区间', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(strings.ci95Label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
               const SizedBox(height: 2),
               Row(
                 children: [
-                  Expanded(child: _statRow('下限', _record!.ci95Low, color: Colors.blueGrey)),
+                  Expanded(child: _statRow(strings.lowerBound, _record!.ci95Low, color: Colors.blueGrey)),
                   const SizedBox(width: 12),
-                  Expanded(child: _statRow('上限', _record!.ci95High, color: Colors.blueGrey)),
+                  Expanded(child: _statRow(strings.upperBound, _record!.ci95High, color: Colors.blueGrey)),
                 ],
               ),
               const SizedBox(height: 8),
               // 75% 置信区间
-              const Text('75% 置信区间', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(strings.ci75Label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
               const SizedBox(height: 2),
               Row(
                 children: [
-                  Expanded(child: _statRow('下限', _record!.ci75Low, color: Colors.blueGrey)),
+                  Expanded(child: _statRow(strings.lowerBound, _record!.ci75Low, color: Colors.blueGrey)),
                   const SizedBox(width: 12),
-                  Expanded(child: _statRow('上限', _record!.ci75High, color: Colors.blueGrey)),
+                  Expanded(child: _statRow(strings.upperBound, _record!.ci75High, color: Colors.blueGrey)),
                 ],
               ),
+              // 趋势折线图
+              if (_trendData != null && _trendData!.length >= 2) ...[
+                const SizedBox(height: 12),
+                TrendChart(
+                  data: _trendData!,
+                  slope: _trendSlope,
+                  firstValue: _trendFirst,
+                  lastValue: _trendLast,
+                ),
+              ],
               // 数据洞察
               if (_insights != null && _insights!.isNotEmpty) ...[
                 const Divider(color: Colors.white24, height: 20),
-                const Text('📊 数据洞察',
-                    style: TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.bold)),
+                Text(strings.insights,
+                    style: const TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 6),
                 ..._insights!.map((ins) => Padding(
                       padding: const EdgeInsets.only(bottom: 6),
@@ -429,17 +501,35 @@ class _GlobePageState extends State<GlobePage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: kIsWeb ? null : const Text('渗透系数'),
+        title: kIsWeb ? null : Text(Strings.of(context).appBarTitle),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          // 收藏列表
+          // Language toggle
+          GestureDetector(
+            onTap: () {
+              final newLocale = Strings.currentLocale == AppLocale.zh ? AppLocale.en : AppLocale.zh;
+              Strings.setLocale(context, newLocale);
+              setState(() {});
+            },
+            child: Container(
+              margin: const EdgeInsets.only(right: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white24),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                Strings.currentLocale == AppLocale.zh ? 'EN' : '中',
+                style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.bookmarks, color: Colors.white54, size: 22),
             onPressed: () => _openFavorites(),
-            tooltip: '收藏夹',
+            tooltip: Strings.of(context).favorites,
           ),
-          // 信息
           IconButton(
             icon: Container(
               width: 24,
@@ -455,7 +545,7 @@ class _GlobePageState extends State<GlobePage> {
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const InfoPage()));
             },
-            tooltip: '关于渗透系数',
+            tooltip: Strings.of(context).aboutTitle,
           ),
         ],
       ),
@@ -528,22 +618,22 @@ class _FavoritesSheet extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                const Text('⭐ 收藏夹', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(Strings.of(context).favorites, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                 const Spacer(),
-                Text('${favorites.length} 项', style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                Text('${favorites.length} ${Strings.of(context).regionCount(favorites.length)}', style: const TextStyle(color: Colors.grey, fontSize: 13)),
               ],
             ),
           ),
           if (favorites.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(40),
+            Padding(
+              padding: const EdgeInsets.all(40),
               child: Column(
                 children: [
-                  Text('☆', style: TextStyle(fontSize: 40, color: Colors.grey)),
-                  SizedBox(height: 8),
-                  Text('还没有收藏', style: TextStyle(color: Colors.grey, fontSize: 14)),
-                  SizedBox(height: 4),
-                  Text('查询地区后点击 ★ 即可收藏', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  const Text('☆', style: TextStyle(fontSize: 40, color: Colors.grey)),
+                  const SizedBox(height: 8),
+                  Text(Strings.of(context).favoritesEmpty, style: const TextStyle(color: Colors.grey, fontSize: 14)),
+                  const SizedBox(height: 4),
+                  Text(Strings.of(context).favoritesHint, style: const TextStyle(color: Colors.grey, fontSize: 12)),
                 ],
               ),
             )

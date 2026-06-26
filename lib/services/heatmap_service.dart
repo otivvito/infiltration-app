@@ -2,7 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-import 'database_helper_mobile.dart';
+import 'database_helper_mobile.dart'
+    if (dart.library.html) 'database_helper_web.dart';
 import 'region_service.dart';
 
 /// 热力图数据点

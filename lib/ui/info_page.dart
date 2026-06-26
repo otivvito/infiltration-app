@@ -1,15 +1,43 @@
 import 'package:flutter/material.dart';
 
-/// 渗透系数科普说明页
+import '../i18n/strings.dart';
+
+/// Infiltration coefficient info page (i18n-aware).
 class InfoPage extends StatelessWidget {
   const InfoPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final s = Strings.of(context);
+    final en = s.locale == AppLocale.en;
+
+    // English bullet points (split by line) or Chinese bullets
+    final whyImportantBullets = en
+        ? _parseBullets(s.infoWhyImportantBody)
+        : const [
+            '建筑能耗：空气渗透造成的热量损失可占建筑总能耗的 30%-50%，是供暖和制冷负荷的主要来源之一',
+            '室内空气质量：室外 PM2.5、臭氧、花粉等污染物通过渗透进入室内，影响呼吸健康',
+            '热舒适性：不受控制的空气渗透导致冷风侵入、温度分布不均，降低居住舒适度',
+            '湿气与霉菌：空气渗透携带的水汽可能在墙体内部凝结，导致结构损坏和霉菌滋生',
+            'HVAC 系统设计：准确的渗透系数是暖通空调系统选型和能耗模拟的基础输入',
+            '建筑节能标准：各国建筑规范对气密性有明确要求（如 Passivhaus 标准要求 n50 ≤ 0.6 ACH），渗透系数是合规性评估的核心指标',
+          ];
+
+    final provideBullets = en
+        ? _parseBullets(s.infoWhatWeProvideBody)
+        : const [
+            '查询任意地区的 6 项统计指标（均值、中位数、95%/75% 置信区间）',
+            '查看全球热力图，了解渗透系数的地理分布（寒冷地区 vs 温暖地区差异显著）',
+            '拖动时间轴观察 1990-2024 年建筑气密性的变化趋势',
+            '并排对比两个地区的数据差异',
+            '获取智能数据洞察（全球排名、趋势方向、季节性特征）',
+            'GPS 自动定位，快速查看您所在地区的空气渗透系数',
+          ];
+
     return Scaffold(
       backgroundColor: const Color(0xFF0D1B2A),
       appBar: AppBar(
-        title: const Text('关于渗透系数'),
+        title: Text(s.aboutTitle),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -18,59 +46,27 @@ class InfoPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildSection(s.infoWhatIs, s.infoWhatIsBody, context: context),
+            const SizedBox(height: 20),
             _buildSection(
-              '🏠 什么是空气渗透系数？',
-              '空气渗透系数（Air Infiltration Coefficient）是衡量室外空气通过建筑围护结构'
-                  '（墙体、门窗缝隙、裂缝等）渗入室内的速率指标，常用单位为 ACH（每小时换气次数）'
-                  '或 m³/(h·m²)。\n\n'
-                  '• 渗透系数高 → 建筑气密性差，室外空气容易进入\n'
-                  '• 渗透系数低 → 建筑气密性好，室内外空气交换少\n\n'
-                  '它是评估建筑围护结构性能的关键参数之一。',
+              s.infoWhyImportant,
+              en ? '' : '空气渗透直接影响建筑能耗、室内环境质量和人体健康：',
+              bullets: whyImportantBullets,
+              context: context,
             ),
             const SizedBox(height: 20),
             _buildSection(
-              '🌍 为什么重要？',
-              '空气渗透直接影响建筑能耗、室内环境质量和人体健康：',
-              bullets: const [
-                '建筑能耗：空气渗透造成的热量损失可占建筑总能耗的 30%-50%，'
-                    '是供暖和制冷负荷的主要来源之一',
-                '室内空气质量：室外 PM2.5、臭氧、花粉等污染物通过渗透进入室内，'
-                    '影响呼吸健康',
-                '热舒适性：不受控制的空气渗透导致冷风侵入、温度分布不均，'
-                    '降低居住舒适度',
-                '湿气与霉菌：空气渗透携带的水汽可能在墙体内部凝结，'
-                    '导致结构损坏和霉菌滋生',
-                'HVAC 系统设计：准确的渗透系数是暖通空调系统选型和能耗模拟的基础输入',
-                '建筑节能标准：各国建筑规范对气密性有明确要求（如 Passivhaus 标准要求'
-                    'n50 ≤ 0.6 ACH），渗透系数是合规性评估的核心指标',
-              ],
+              s.infoWhatWeProvide,
+              en ? '' : '基于全球 3,614 个地区 1990-2024 年的月度空气渗透系数数据，您可以：',
+              bullets: provideBullets,
+              context: context,
             ),
             const SizedBox(height: 20),
-            _buildSection(
-              '📊 本 App 提供什么？',
-              '基于全球 3,614 个地区 1990-2024 年的月度空气渗透系数数据，您可以：',
-              bullets: const [
-                '查询任意地区的 6 项统计指标（均值、中位数、95%/75% 置信区间）',
-                '查看全球热力图，了解渗透系数的地理分布（寒冷地区 vs 温暖地区差异显著）',
-                '拖动时间轴观察 1990-2024 年建筑气密性的变化趋势',
-                '并排对比两个地区的数据差异',
-                '获取智能数据洞察（全球排名、趋势方向、季节性特征）',
-                'GPS 自动定位，快速查看您所在地区的空气渗透系数',
-              ],
-            ),
-            const SizedBox(height: 20),
-            _buildSection(
-              '🔬 数据说明',
-              '数据时间范围：1990 年 1 月 – 2024 年 12 月（月度数据）\n'
-                  '覆盖范围：全球 252 个国家和地区的 3,614 个观测点\n'
-                  '统计指标：均值、中位数、95% 置信区间上下限、75% 置信区间上下限\n'
-                  '应用领域：建筑节能设计、室内空气质量评估、HVAC 系统优化、'
-                  '建筑规范制定',
-            ),
+            _buildSection(s.infoDataNotes, s.infoDataNotesBody, context: context),
             const SizedBox(height: 30),
             Center(
               child: Text(
-                '渗透系数查询系统 v1.0',
+                s.version,
                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
             ),
@@ -81,12 +77,27 @@ class InfoPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSection(String title, String body, {List<String>? bullets}) {
+  /// Parse bullet points from a string with `\n• ` or `\n- ` markers.
+  static List<String> _parseBullets(String body) {
+    final lines = body.split('\n');
+    final bullets = <String>[];
+    for (final line in lines) {
+      final trimmed = line.trim();
+      if (trimmed.startsWith('• ') || trimmed.startsWith('- ')) {
+        bullets.add(trimmed.substring(2));
+      } else if (trimmed.isNotEmpty) {
+        bullets.add(trimmed);
+      }
+    }
+    return bullets;
+  }
+
+  Widget _buildSection(String title, String body, {List<String>? bullets, BuildContext? context}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[900]!.withAlpha(150),
+        color: Colors.grey[900]!.withValues(alpha: 0.59),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(

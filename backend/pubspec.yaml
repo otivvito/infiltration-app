@@ -1,0 +1,13 @@
+name: infiltration_api
+description: REST API for infiltration coefficient database
+version: 1.0.0
+publish_to: 'none'
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  shelf: ^1.4.2
+  shelf_router: ^1.1.4
+  shelf_cors_headers: ^0.1.5
+  sqlite3: ^2.4.6

@@ -37,6 +37,8 @@ dependencies:
   path_provider: ^2.1.5      # 获取应用可写目录
   geolocator: ^10.1.0        # GPS定位（可选）
   flutter_inappwebview: ^6.1.5  # WebView (Android/iOS/Web)
+  http: ^1.2.2                   # HTTP client (Web API calls)
+  share_plus: ^13.1.0            # 系统分享（图片/文本）
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

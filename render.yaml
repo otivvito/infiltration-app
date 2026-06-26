@@ -1,0 +1,16 @@
+# Render.com Blueprint — infiltration API
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: infiltration-api
+    runtime: docker
+    repo: https://github.com/otivvito/infiltration-app
+    branch: main
+    rootDir: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: INFILTRATION_DB_PATH
+        value: /data/infiltration.db
+      - key: PORT
+        value: "8080"
