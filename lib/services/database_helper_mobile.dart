@@ -1,11 +1,10 @@
-// 原生平台数据库查询 —— Android/iOS 用 sqflite，Desktop 用 sqflite_common_ffi
+// 原生平台数据库查询 —— Android/iOS 用 sqflite，Desktop 用 database_helper_desktop.dart
 import 'dart:io';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite/sqflite.dart';
 
 /// 单条渗透系数查询结果
 class InfiltrationRecord {
@@ -41,11 +40,8 @@ class DatabaseHelper {
   Future<void> init() async {
     if (_initialized) return;
 
-    // Desktop 平台（Windows/Linux/macOS）需要用 FFI 初始化
-    if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
-      sqfliteFfiInit();
-      databaseFactory = databaseFactoryFfi;
-    }
+    // Desktop FFI 初始化通过 database_helper_desktop.dart 条件加载
+    // 移动端使用系统内置 SQLite，不需要 FFI
 
     final dbDir = await getApplicationDocumentsDirectory();
     final dbPath = join(dbDir.path, 'infiltration.db');
