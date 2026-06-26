@@ -27,6 +27,7 @@ class SearchDialog extends StatefulWidget {
 class _SearchDialogState extends State<SearchDialog> {
   final RegionService _service = RegionService();
   final ScrollController _yearScrollController = ScrollController();
+  final ScrollController _countryScrollController = ScrollController();
 
   // Step: 0=country list, 1=region list, 2=time picker
   int _step = 0;
@@ -47,6 +48,7 @@ class _SearchDialogState extends State<SearchDialog> {
   @override
   void dispose() {
     _yearScrollController.dispose();
+    _countryScrollController.dispose();
     super.dispose();
   }
 
@@ -159,6 +161,7 @@ class _SearchDialogState extends State<SearchDialog> {
                       },
                     ))
               : ListView.builder(
+                  controller: _countryScrollController,
                   itemCount: countries.length + 1,
                   itemBuilder: (ctx, i) {
                     if (i == 0) {
