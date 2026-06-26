@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'earth_view_native.dart'
     if (dart.library.html) 'earth_view_web.dart';
@@ -66,6 +67,7 @@ class _GlobePageState extends State<GlobePage> {
   bool _isFavorited = false;
   int? _regionId;
   final ShareCardGenerator _shareCard = ShareCardGenerator();
+  DateTime? _lastBackPress;
 
   @override
   void initState() {
@@ -500,7 +502,23 @@ class _GlobePageState extends State<GlobePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final s = Strings.of(context);
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          final now = DateTime.now();
+          if (_lastBackPress == null || now.difference(_lastBackPress!) > const Duration(seconds: 2)) {
+            _lastBackPress = now;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(s.exitHint), duration: const Duration(seconds: 2)),
+            );
+          } else {
+            SystemNavigator.pop();
+          }
+        }
+      },
+      child: Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: kIsWeb ? null : Text(Strings.of(context).appBarTitle),
@@ -603,6 +621,7 @@ class _GlobePageState extends State<GlobePage> {
               ),
             ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      ),
     );
   }
 }

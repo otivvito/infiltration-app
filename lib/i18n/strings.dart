@@ -90,6 +90,10 @@ class Strings {
   String get locationDisabled => locale == AppLocale.en
       ? 'Please enable location service'
       : '请开启手机定位服务';
+  String get exitHint => locale == AppLocale.en
+      ? 'Press again to exit'
+      : '再按一次退出应用';
+
   String get locationTimeout => locale == AppLocale.en
       ? 'Location timeout, move to open area'
       : '定位超时，请移至开阔地带或确保手机定位已开启';

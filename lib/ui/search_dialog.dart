@@ -50,26 +50,34 @@ class _SearchDialogState extends State<SearchDialog> {
     super.dispose();
   }
 
+  void _goBack() {
+    if (_step == 0) {
+      Navigator.pop(context);
+    } else {
+      setState(() => _step--);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: Text(_step == 2 ? Strings.of(context).selectTime : Strings.of(context).selectRegion),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (_step == 0) {
-              Navigator.pop(context);
-            } else {
-              setState(() => _step--);
-            }
-          },
+    return PopScope(
+      canPop: _step == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) _goBack();
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(
+          title: Text(_step == 2 ? Strings.of(context).selectTime : Strings.of(context).selectRegion),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: _goBack,
+          ),
         ),
+        body: _buildBody(),
       ),
-      body: _buildBody(),
     );
   }
 
